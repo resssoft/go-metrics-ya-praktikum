@@ -19,8 +19,8 @@ type counter int64
 
 var (
 	exitChan       chan int
-	pollInterval   = time.Second * 22
-	reportInterval = time.Second * 990
+	pollInterval   = time.Second * 2
+	reportInterval = time.Second * 10
 	reportUrl      = "http://%s:%s/update/%s/%s/%v" // http://address:port/update/<type>/<name>/<value>
 	defaultAddress = "127.0.0.1"
 	defaultPort    = "8080"
