@@ -1,6 +1,7 @@
 package ramstorage
 
 import (
+	"errors"
 	"github.com/resssoft/go-metrics-ya-praktikum/internal/interfaces"
 	"github.com/resssoft/go-metrics-ya-praktikum/internal/models"
 	"sync"
@@ -61,4 +62,26 @@ func (s *simpleRamStorage) IncrementCounter(key string, val models.Counter) {
 		data.CounterData[key] = val
 	}
 	data.Unlock()
+}
+
+func (s *simpleRamStorage) GetCounter(key string) (models.Counter, error) {
+	var err error = nil
+	data.Lock()
+	value, ok := data.CounterData[key]
+	if !ok {
+		err = models.ErrorNotFound
+	}
+	data.Unlock()
+	return value, err
+}
+
+func (s *simpleRamStorage) GetGuage(key string) (models.Gauge, error) {
+	var err error = nil
+	data.Lock()
+	value, ok := data.GaugeData[key]
+	if !ok {
+		err = errors.New("not found")
+	}
+	data.Unlock()
+	return value, err
 }

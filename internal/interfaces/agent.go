@@ -13,4 +13,6 @@ type Storage interface {
 	GetGuages() map[string]models.Gauge
 	GetCounters() map[string]models.Counter
 	IncrementCounter(string, models.Counter)
+	GetCounter(string) (models.Counter, error)
+	GetGuage(string) (models.Gauge, error)
 }
