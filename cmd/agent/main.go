@@ -39,11 +39,10 @@ func main() {
 	fmt.Println("Start agent")
 	exitChan = make(chan int)
 	ctx, cancel := context.WithCancel(context.Background())
-	ctx2, cancel2 := context.WithCancel(context.Background())
 	updateDataTicker := time.NewTicker(pollInterval)
 	sendDataTicker := time.NewTicker(reportInterval)
 	go poll(ctx, updateDataTicker)
-	go report(ctx2, sendDataTicker)
+	go report(ctx, sendDataTicker)
 
 	signalChanel := make(chan os.Signal, 1)
 	signal.Notify(signalChanel,
@@ -56,7 +55,6 @@ func main() {
 	case syscall.SIGQUIT, syscall.SIGINT, syscall.SIGTERM:
 		fmt.Println("Signal quit triggered.")
 		cancel()
-		cancel2()
 	default:
 		fmt.Println("Unknown signal.")
 	}
@@ -112,7 +110,7 @@ func poll(ctx context.Context, ticker *time.Ticker) {
 		case <-ctx.Done():
 			fmt.Println("break poll")
 			exitChan <- 1
-			break
+			return
 		}
 	}
 }
@@ -171,7 +169,7 @@ func report(ctx context.Context, ticker *time.Ticker) {
 		case <-ctx.Done():
 			fmt.Println("break report")
 			exitChan <- 1
-			break
+			return
 		}
 	}
 }
