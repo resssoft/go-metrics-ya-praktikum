@@ -43,7 +43,7 @@ func (ms *metricsSaver) SaveMetrics(rw http.ResponseWriter, req *http.Request) {
 			fmt.Fprintf(rw, "value parsing error: %v", err.Error())
 			return
 		}
-		ms.storage.SaveCounter(dataName, models.Counter(valueInt64))
+		ms.storage.IncrementCounter(dataName, models.Counter(valueInt64))
 	case "guage":
 		valueFloat64, err := strconv.ParseFloat(dataValue, 64)
 		if err != nil {

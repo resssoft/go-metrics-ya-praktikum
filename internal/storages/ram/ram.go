@@ -52,3 +52,13 @@ func (s *simpleRamStorage) GetCounters() map[string]models.Counter {
 	data.Unlock()
 	return result
 }
+
+func (s *simpleRamStorage) IncrementCounter(key string, val models.Counter) {
+	data.Lock()
+	if current, ok := data.CounterData[key]; ok {
+		data.CounterData[key] = val + current
+	} else {
+		data.CounterData[key] = val
+	}
+	data.Unlock()
+}
