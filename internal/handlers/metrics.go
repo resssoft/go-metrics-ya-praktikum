@@ -26,7 +26,7 @@ func (ms *metricsSaver) SaveMetrics(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 	uriParts := strings.Split(req.URL.Path, "/")
-	if len(uriParts) < 5 {
+	if len(uriParts) != 5 {
 		rw.WriteHeader(http.StatusNotFound)
 		fmt.Fprintf(rw, "Not found this route")
 		return
@@ -54,6 +54,4 @@ func (ms *metricsSaver) SaveMetrics(rw http.ResponseWriter, req *http.Request) {
 		ms.storage.SaveGuage(dataName, models.Gauge(valueFloat64))
 	}
 	rw.WriteHeader(http.StatusOK)
-	fmt.Fprintf(rw, "Counters %v", ms.storage.GetCounters())
-	fmt.Fprintf(rw, "Gauges %v", ms.storage.GetGuages())
 }
