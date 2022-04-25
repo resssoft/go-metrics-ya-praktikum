@@ -12,7 +12,7 @@ import (
 const workers = 1
 
 var (
-	reportUrl      = "http://%s:%s/update/%s/%s/%v" // http://address:port/update/<type>/<name>/<value>
+	reportURL      = "http://%s:%s/update/%s/%s/%v" // http://address:port/update/<type>/<name>/<value>
 	defaultAddress = "127.0.0.1"
 	defaultPort    = "8080"
 )
@@ -62,7 +62,7 @@ func (r *Reporter) report() {
 			r.storage.GetGuages()
 			for name, value := range r.storage.GetGuages() {
 				response, err := http.Post(fmt.Sprintf(
-					reportUrl,
+					reportURL,
 					defaultAddress,
 					defaultPort,
 					"gauge",
@@ -81,7 +81,7 @@ func (r *Reporter) report() {
 
 			for name, value := range r.storage.GetCounters() {
 				response, err := http.Post(fmt.Sprintf(
-					reportUrl,
+					reportURL,
 					defaultAddress,
 					defaultPort,
 					"counter",
