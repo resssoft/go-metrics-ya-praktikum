@@ -59,13 +59,12 @@ func (r *Reporter) report() {
 	for {
 		select {
 		case <-r.ticker.C:
-			r.storage.GetGuages()
 			for name, value := range r.storage.GetGuages() {
 				response, err := http.Post(fmt.Sprintf(
 					reportURL,
 					defaultAddress,
 					defaultPort,
-					"gauge",
+					"guage",
 					name,
 					value), "text/plain", nil)
 				if err != nil {

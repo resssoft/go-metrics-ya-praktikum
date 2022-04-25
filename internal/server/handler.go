@@ -13,6 +13,7 @@ import (
 
 const tmpDefault = `
 <html><body><table align="center">
+<tr><th> Name </th><th> Value </th></tr>
 {{range .Values}}
 <tr><td> {{.Name}} </td><td> {{.Value}} </td></tr>
 {{end}}
