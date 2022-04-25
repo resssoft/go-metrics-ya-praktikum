@@ -39,18 +39,18 @@ func New(
 	}
 }
 
-func (p *Reporter) Start() {
-	p.ticker = time.NewTicker(p.Duration)
+func (r *Reporter) Start() {
+	r.ticker = time.NewTicker(r.Duration)
 	for i := 0; i < workers; i++ {
-		go p.report()
+		go r.report()
 	}
 
 }
 
-func (p *Reporter) Stop() {
-	p.cancel()
+func (r *Reporter) Stop() {
+	r.cancel()
 	for i := 0; i < workers; i++ {
-		<-p.exitChan
+		<-r.exitChan
 	}
 }
 
