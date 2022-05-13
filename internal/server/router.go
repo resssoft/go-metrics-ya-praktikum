@@ -2,10 +2,10 @@ package server
 
 import (
 	"github.com/go-chi/chi/v5"
-	"github.com/resssoft/go-metrics-ya-praktikum/internal/interfaces"
+	"github.com/resssoft/go-metrics-ya-praktikum/internal/structure"
 )
 
-func Router(storage interfaces.Storage) chi.Router {
+func Router(storage structure.Storage) chi.Router {
 	router := chi.NewRouter()
 	handler := NewMetricsSaver(storage)
 

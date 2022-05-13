@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/go-chi/chi/v5"
-	"github.com/resssoft/go-metrics-ya-praktikum/internal/interfaces"
 	"github.com/resssoft/go-metrics-ya-praktikum/internal/models"
+	"github.com/resssoft/go-metrics-ya-praktikum/internal/structure"
 	"html/template"
 	"net/http"
 	"strconv"
@@ -21,10 +21,10 @@ const tmpDefault = `
 `
 
 type MetricsSaver struct {
-	storage interfaces.Storage
+	storage structure.Storage
 }
 
-func NewMetricsSaver(storage interfaces.Storage) MetricsSaver {
+func NewMetricsSaver(storage structure.Storage) MetricsSaver {
 	return MetricsSaver{
 		storage: storage,
 	}

@@ -2,8 +2,8 @@ package ramstorage
 
 import (
 	"errors"
-	"github.com/resssoft/go-metrics-ya-praktikum/internal/interfaces"
 	"github.com/resssoft/go-metrics-ya-praktikum/internal/models"
+	"github.com/resssoft/go-metrics-ya-praktikum/internal/structure"
 	"sync"
 )
 
@@ -18,7 +18,7 @@ var data = struct {
 
 type simpleRAMStorage struct{}
 
-func New() interfaces.Storage {
+func New() structure.Storage {
 	return &simpleRAMStorage{}
 }
 

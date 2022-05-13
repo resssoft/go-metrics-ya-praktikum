@@ -3,7 +3,7 @@ package reporter
 import (
 	"context"
 	"fmt"
-	"github.com/resssoft/go-metrics-ya-praktikum/internal/interfaces"
+	"github.com/resssoft/go-metrics-ya-praktikum/internal/structure"
 	"io/ioutil"
 	"net/http"
 	"time"
@@ -22,13 +22,13 @@ type Reporter struct {
 	ticker   *time.Ticker
 	ctx      context.Context
 	cancel   context.CancelFunc
-	storage  interfaces.Storage
+	storage  structure.Storage
 	exitChan chan int
 }
 
 func New(
 	duration time.Duration,
-	storage interfaces.Storage) interfaces.Task {
+	storage structure.Storage) structure.Task {
 	ctx, cancel := context.WithCancel(context.Background())
 	return &Reporter{
 		ctx:      ctx,

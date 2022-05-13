@@ -3,8 +3,8 @@ package poller
 import (
 	"context"
 	"fmt"
-	"github.com/resssoft/go-metrics-ya-praktikum/internal/interfaces"
 	"github.com/resssoft/go-metrics-ya-praktikum/internal/models"
+	"github.com/resssoft/go-metrics-ya-praktikum/internal/structure"
 	"math/rand"
 	"runtime"
 	"time"
@@ -18,13 +18,13 @@ type Poller struct {
 	ctx      context.Context
 	cancel   context.CancelFunc
 	iterator int
-	storage  interfaces.Storage
+	storage  structure.Storage
 	exitChan chan int
 }
 
 func New(
 	duration time.Duration,
-	storage interfaces.Storage) interfaces.Task {
+	storage structure.Storage) structure.Task {
 	ctx, cancel := context.WithCancel(context.Background())
 	return &Poller{
 		ctx:      ctx,

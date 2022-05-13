@@ -1,4 +1,4 @@
-package interfaces
+package structure
 
 import "github.com/resssoft/go-metrics-ya-praktikum/internal/models"
 
