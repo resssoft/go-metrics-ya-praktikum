@@ -17,18 +17,18 @@ const (
 )
 
 var (
-	exitChan       chan int
+	exitChan chan int
 )
 
 func main() {
 	fmt.Println("Start agent")
 	exitChan = make(chan int)
 	storage := ramstorage.New()
-	poller := poller.New(pollInterval, storage)
-	reporter := reporter.New(reportInterval, storage)
+	pollerService := poller.New(pollInterval, storage)
+	reporterService := reporter.New(reportInterval, storage)
 
-	poller.Start()
-	reporter.Start()
+	cancelPoller := pollerService.Start()
+	cancelReporter := reporterService.Start()
 
 	signalChanel := make(chan os.Signal, 1)
 	signal.Notify(signalChanel,
@@ -41,8 +41,8 @@ func main() {
 		switch s {
 		case syscall.SIGQUIT, syscall.SIGINT, syscall.SIGTERM:
 			fmt.Println("Signal quit triggered.")
-			poller.Stop()
-			reporter.Stop()
+			pollerService.Stop(cancelPoller)
+			reporterService.Stop(cancelReporter)
 			exitChan <- 1
 		default:
 			fmt.Println("Unknown signal.")

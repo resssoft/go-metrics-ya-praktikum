@@ -20,8 +20,6 @@ var (
 type Reporter struct {
 	Duration time.Duration
 	ticker   *time.Ticker
-	ctx      context.Context
-	cancel   context.CancelFunc
 	storage  structure.Storage
 	exitChan chan int
 }
@@ -29,32 +27,30 @@ type Reporter struct {
 func New(
 	duration time.Duration,
 	storage structure.Storage) structure.Task {
-	ctx, cancel := context.WithCancel(context.Background())
 	return &Reporter{
-		ctx:      ctx,
 		Duration: duration,
-		cancel:   cancel,
 		storage:  storage,
 		exitChan: make(chan int),
 	}
 }
 
-func (r *Reporter) Start() {
+func (r *Reporter) Start() context.CancelFunc {
+	ctx, cancel := context.WithCancel(context.Background())
 	r.ticker = time.NewTicker(r.Duration)
 	for i := 0; i < workers; i++ {
-		go r.report()
+		go r.report(ctx)
 	}
-
+	return cancel
 }
 
-func (r *Reporter) Stop() {
-	r.cancel()
+func (r *Reporter) Stop(cancel context.CancelFunc) {
+	cancel()
 	for i := 0; i < workers; i++ {
 		<-r.exitChan
 	}
 }
 
-func (r *Reporter) report() {
+func (r *Reporter) report(ctx context.Context) {
 	fmt.Println("run report event spy")
 	for {
 		select {
@@ -97,7 +93,7 @@ func (r *Reporter) report() {
 				}
 				response.Body.Close()
 			}
-		case <-r.ctx.Done():
+		case <-ctx.Done():
 			fmt.Println("break report")
 			r.exitChan <- 1
 			return

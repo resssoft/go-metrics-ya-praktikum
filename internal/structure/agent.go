@@ -1,10 +1,13 @@
 package structure
 
-import "github.com/resssoft/go-metrics-ya-praktikum/internal/models"
+import (
+	"context"
+	"github.com/resssoft/go-metrics-ya-praktikum/internal/models"
+)
 
 type Task interface {
-	Start()
-	Stop()
+	Start() context.CancelFunc
+	Stop(context.CancelFunc)
 }
 
 type Storage interface {

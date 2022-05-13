@@ -15,8 +15,6 @@ const workers = 1
 type Poller struct {
 	Duration time.Duration
 	ticker   *time.Ticker
-	ctx      context.Context
-	cancel   context.CancelFunc
 	iterator int
 	storage  structure.Storage
 	exitChan chan int
@@ -25,32 +23,30 @@ type Poller struct {
 func New(
 	duration time.Duration,
 	storage structure.Storage) structure.Task {
-	ctx, cancel := context.WithCancel(context.Background())
 	return &Poller{
-		ctx:      ctx,
 		Duration: duration,
-		cancel:   cancel,
 		storage:  storage,
 		exitChan: make(chan int),
 	}
 }
 
-func (p *Poller) Start() {
+func (p *Poller) Start() context.CancelFunc {
+	ctx, cancel := context.WithCancel(context.Background())
 	p.ticker = time.NewTicker(p.Duration)
 	for i := 0; i < workers; i++ {
-		go p.poll()
+		go p.poll(ctx)
 	}
-
+	return cancel
 }
 
-func (p *Poller) Stop() {
-	p.cancel()
+func (p *Poller) Stop(cancel context.CancelFunc) {
+	cancel()
 	for i := 0; i < workers; i++ {
 		<-p.exitChan
 	}
 }
 
-func (p *Poller) poll() {
+func (p *Poller) poll(ctx context.Context) {
 	fmt.Println("run poll event spy")
 	var m runtime.MemStats
 	s1 := rand.NewSource(time.Now().UnixNano())
@@ -94,7 +90,7 @@ func (p *Poller) poll() {
 
 			fmt.Println("poll iterator", p.iterator)
 
-		case <-p.ctx.Done():
+		case <-ctx.Done():
 			fmt.Println("break poll")
 			p.exitChan <- 1
 			return
