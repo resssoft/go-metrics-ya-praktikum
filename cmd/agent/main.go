@@ -11,10 +11,13 @@ import (
 	"time"
 )
 
-var (
-	exitChan       chan int
+const (
 	pollInterval   = time.Second * 2
 	reportInterval = time.Second * 10
+)
+
+var (
+	exitChan       chan int
 )
 
 func main() {
