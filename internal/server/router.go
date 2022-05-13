@@ -8,7 +8,6 @@ import (
 func Router(storage structure.Storage) chi.Router {
 	router := chi.NewRouter()
 	handler := NewMetricsSaver(storage)
-
 	router.Route("/", func(r chi.Router) {
 		r.Get("/", handler.GetAll)
 		r.Route("/update", func(r chi.Router) {
