@@ -7,81 +7,85 @@ import (
 	"sync"
 )
 
-var data = struct {
+type memStorage struct {
 	sync.RWMutex
 	GaugeData   map[string]models.Gauge
 	CounterData map[string]models.Counter
-}{
-	GaugeData:   make(map[string]models.Gauge),
-	CounterData: make(map[string]models.Counter),
 }
 
-type simpleRAMStorage struct{}
+type simpleRAMStorage struct {
+	storage memStorage
+}
 
 func New() structure.Storage {
-	return &simpleRAMStorage{}
+	return &simpleRAMStorage{
+		storage: memStorage{
+			GaugeData:   make(map[string]models.Gauge),
+			CounterData: make(map[string]models.Counter),
+		},
+	}
 }
 
 func (s *simpleRAMStorage) SaveGuage(key string, val models.Gauge) {
-	data.Lock()
-	data.GaugeData[key] = val
-	data.Unlock()
+	s.storage.Lock()
+	s.storage.GaugeData[key] = val
+	s.storage.Unlock()
 }
 
 func (s *simpleRAMStorage) SaveCounter(key string, val models.Counter) {
-	data.Lock()
-	data.CounterData[key] = val
-	data.Unlock()
+	s.storage.Lock()
+	s.storage.CounterData[key] = val
+	s.storage.Unlock()
 }
 
 func (s *simpleRAMStorage) GetGuages() map[string]models.Gauge {
 	result := make(map[string]models.Gauge)
-	data.Lock()
-	for k, v := range data.GaugeData {
+	s.storage.Lock()
+	for k, v := range s.storage.GaugeData {
 		result[k] = v
 	}
-	data.Unlock()
+	s.storage.Unlock()
 	return result
 }
 
 func (s *simpleRAMStorage) GetCounters() map[string]models.Counter {
 	result := make(map[string]models.Counter)
-	data.Lock()
-	for k, v := range data.CounterData {
+	s.storage.Lock()
+	for k, v := range s.storage.CounterData {
 		result[k] = v
 	}
-	data.Unlock()
+	s.storage.Unlock()
 	return result
 }
 
 func (s *simpleRAMStorage) IncrementCounter(key string, val models.Counter) {
-	data.Lock()
-	if current, ok := data.CounterData[key]; ok {
-		data.CounterData[key] = val + current
+	s.storage.Lock()
+	if current, ok := s.storage.CounterData[key]; ok {
+		s.storage.CounterData[key] = val + current
 	} else {
-		data.CounterData[key] = val
+		s.storage.CounterData[key] = val
 	}
-	data.Unlock()
+	s.storage.Unlock()
 }
 
 func (s *simpleRAMStorage) GetCounter(key string) (models.Counter, error) {
 	var err error = nil
-	data.Lock()
-	value, ok := data.CounterData[key]
+	s.storage.Lock()
+	value, ok := s.storage.CounterData[key]
 	if !ok {
 		err = models.ErrorNotFound
 	}
-	data.Unlock()
+	s.storage.Unlock()
 	return value, err
 }
 
 func (s *simpleRAMStorage) GetGuage(key string) (models.Gauge, error) {
 	var err error = nil
-	data.Lock()
-	value, ok := data.GaugeData[key]
+	s.storage.Lock()
+	value, ok := s.storage.GaugeData[key]
 	if !ok {
 		err = errors.New("not found")
 	}
-	data.Unlock()
+	s.storage.Unlock()
 	return value, err
 }
