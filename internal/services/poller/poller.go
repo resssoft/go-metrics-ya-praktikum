@@ -41,8 +41,10 @@ func (p *Poller) Start() context.CancelFunc {
 
 func (p *Poller) Stop(cancel context.CancelFunc) {
 	cancel()
+	fmt.Println("workers", workers)
 	for i := 0; i < workers; i++ {
 		<-p.exitChan
+		fmt.Println("workers s", i)
 	}
 }
 

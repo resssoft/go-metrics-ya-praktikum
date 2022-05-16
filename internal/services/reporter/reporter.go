@@ -45,8 +45,11 @@ func (r *Reporter) Start() context.CancelFunc {
 
 func (r *Reporter) Stop(cancel context.CancelFunc) {
 	cancel()
+	fmt.Println("workers", workers)
 	for i := 0; i < workers; i++ {
+		fmt.Println("workers p", i)
 		<-r.exitChan
+		fmt.Println("workers p", i)
 	}
 }
 
@@ -65,11 +68,11 @@ func (r *Reporter) report(ctx context.Context) {
 					value), "text/plain", nil)
 				if err != nil {
 					fmt.Println(err)
-					return
+					continue
 				}
 				_, err = ioutil.ReadAll(response.Body)
 				if err != nil {
-					return
+					continue
 				}
 				response.Body.Close()
 			}
@@ -84,12 +87,12 @@ func (r *Reporter) report(ctx context.Context) {
 					value), "text/plain", nil)
 				if err != nil {
 					fmt.Println(err)
-					return
+					continue
 				}
 				fmt.Println("report data", name, value) //TODO: remove after check
 				_, err = ioutil.ReadAll(response.Body)
 				if err != nil {
-					return
+					continue
 				}
 				response.Body.Close()
 			}

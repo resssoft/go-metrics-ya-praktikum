@@ -34,19 +34,22 @@ func main() {
 	signal.Notify(signalChanel,
 		syscall.SIGTERM,
 		syscall.SIGINT,
-		syscall.SIGQUIT)
+		syscall.SIGQUIT,
+		syscall.SIGKILL)
 
 	go func() {
 		s := <-signalChanel
 		switch s {
-		case syscall.SIGQUIT, syscall.SIGINT, syscall.SIGTERM:
+		case syscall.SIGQUIT, syscall.SIGINT, syscall.SIGTERM, syscall.SIGKILL:
 			fmt.Println("Signal quit triggered.")
 			pollerService.Stop(cancelPoller)
 			reporterService.Stop(cancelReporter)
 			exitChan <- 1
 		default:
 			fmt.Println("Unknown signal.")
+			exitChan <- 2
 		}
 	}()
 	<-exitChan
+	fmt.Println("Stopped")
 }
