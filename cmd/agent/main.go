@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"github.com/resssoft/go-metrics-ya-praktikum/internal/services/poller"
 	"github.com/resssoft/go-metrics-ya-praktikum/internal/services/reporter"
@@ -12,16 +13,15 @@ import (
 	"time"
 )
 
-var (
-	pollInterval   = time.Second * 2
-	reportInterval = time.Second * 10
-	address        = "127.0.0.1:8080"
-)
-
 func main() {
-	reportInterval = params.DurationByEnv(reportInterval, "REPORT_INTERVAL")
-	pollInterval = params.DurationByEnv(pollInterval, "POLL_INTERVAL")
-	address = params.StrByEnv(address, "ADDRESS")
+	addressFlag := flag.String("a", "127.0.0.1:8080", "server address")
+	reportIntervalIntervalFlag := flag.Duration("r", time.Second*10, "agent report interval")
+	pollIntervalIntervalFlag := flag.Duration("p", time.Second*10, "agent poll interval")
+	flag.Parse()
+
+	reportInterval := params.DurationByEnv(*reportIntervalIntervalFlag, "REPORT_INTERVAL")
+	pollInterval := params.DurationByEnv(*pollIntervalIntervalFlag, "POLL_INTERVAL")
+	address := params.StrByEnv(*addressFlag, "ADDRESS")
 
 	fmt.Println(fmt.Sprintf(
 		"Start agent with intervals for poll: %v, for report: %v and api address: %s",

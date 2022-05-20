@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"github.com/resssoft/go-metrics-ya-praktikum/internal/server"
 	"github.com/resssoft/go-metrics-ya-praktikum/internal/services/writer"
@@ -15,13 +16,25 @@ import (
 )
 
 func main() {
-	address := params.StrByEnv(":8080", "ADDRESS")
-	storeInterval := params.DurationByEnv(time.Second*300, "STORE_INTERVAL")
-	storePath := params.StrByEnv("/tmp/devops-metrics-db.json", "STORE_FILE")
-	restoreFlag := params.BoolByEnv(true, "RESTORE")
-	fmt.Println("Start server by address: " + address)
+	restoreFlag := flag.Bool("r", true, "restore flag")
+	addressFlag := flag.String("a", ":8080", "server address")
+	storePathFlag := flag.String("f", "/tmp/devops-metrics-db.json", "server store file path")
+	storeIntervalFlag := flag.Duration("i", time.Second*300, "server store interval")
+	flag.Parse()
+
+	address := params.StrByEnv(*addressFlag, "ADDRESS")
+	storeInterval := params.DurationByEnv(*storeIntervalFlag, "STORE_INTERVAL")
+	storePath := params.StrByEnv(*storePathFlag, "STORE_FILE")
+	restore := params.BoolByEnv(*restoreFlag, "RESTORE")
+
+	fmt.Println(fmt.Sprintf(
+		"Start server by address: %s store duration: %v restore flag: %v and store file: %s",
+		address,
+		storeInterval,
+		restore,
+		storePath))
 	storage := ramstorage.New()
-	writerService := writer.New(storeInterval, storePath, restoreFlag, storage)
+	writerService := writer.New(storeInterval, storePath, restore, storage)
 	cansel := writerService.Start()
 
 	signalChanel := make(chan os.Signal, 1)
