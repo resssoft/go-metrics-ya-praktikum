@@ -18,10 +18,6 @@ var (
 	address        = "127.0.0.1:8080"
 )
 
-var (
-	exitChan chan int
-)
-
 func main() {
 	reportInterval = params.DurationByEnv(reportInterval, "REPORT_INTERVAL")
 	pollInterval = params.DurationByEnv(pollInterval, "POLL_INTERVAL")
@@ -32,7 +28,6 @@ func main() {
 		pollInterval,
 		reportInterval,
 		address))
-	exitChan = make(chan int)
 	storage := ramstorage.New()
 	pollerService := poller.New(pollInterval, storage)
 	reporterService := reporter.New(reportInterval, address, storage)
@@ -46,18 +41,16 @@ func main() {
 		syscall.SIGINT,
 		syscall.SIGQUIT)
 
-	go func() {
+	func() {
 		s := <-signalChanel
 		switch s {
 		case syscall.SIGQUIT, syscall.SIGINT, syscall.SIGTERM:
 			fmt.Println("Signal quit triggered.")
 			pollerService.Stop(cancelPoller)
 			reporterService.Stop(cancelReporter)
-			exitChan <- 1
+			os.Exit(0)
 		default:
 			fmt.Println("Unknown signal.")
 		}
 	}()
-
-	<-exitChan
 }
