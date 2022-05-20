@@ -69,12 +69,12 @@ func (w *writer) store() {
 
 func (w *writer) restore() {
 	fmt.Println("run restore data")
-	dataJson, err := ioutil.ReadFile(w.path)
+	dataJSON, err := ioutil.ReadFile(w.path)
 	if err != nil {
 		fmt.Println("restore data error: " + err.Error())
 	} else {
 		data := storeData{}
-		err = json.Unmarshal(dataJson, &data)
+		err = json.Unmarshal(dataJSON, &data)
 		if err != nil {
 			fmt.Println("unmarshal data error: " + err.Error())
 		} else {
