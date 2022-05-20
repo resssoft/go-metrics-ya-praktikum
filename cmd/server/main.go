@@ -28,7 +28,7 @@ func main() {
 	restore := params.BoolByEnv(*restoreFlag, "RESTORE")
 
 	fmt.Println(fmt.Sprintf(
-		"Start server by address: %s store duration: %v restore flag: %v and store file: %s",
+		"Start server by address: %s store duration: %v restore flag: %v and store file: %s \n",
 		address,
 		storeInterval,
 		restore,

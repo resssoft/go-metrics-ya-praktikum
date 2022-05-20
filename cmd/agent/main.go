@@ -24,7 +24,7 @@ func main() {
 	address := params.StrByEnv(*addressFlag, "ADDRESS")
 
 	fmt.Println(fmt.Sprintf(
-		"Start agent with intervals for poll: %v, for report: %v and api address: %s",
+		"Start agent with intervals for poll: %v, for report: %v and api address: %s \n",
 		pollInterval,
 		reportInterval,
 		address))
