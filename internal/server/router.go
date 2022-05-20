@@ -11,12 +11,12 @@ func Router(storage structure.Storage) chi.Router {
 	router.Route("/", func(r chi.Router) {
 		r.Get("/", handler.GetAll)
 		r.Route("/update", func(r chi.Router) {
-			r.Post("/guage/{name}/{value}", handler.SaveGuage)
+			r.Post("/gauge/{name}/{value}", handler.SaveGauge)
 			r.Post("/counter/{name}/{value}", handler.SaveCounter)
 			r.Post("/", handler.SaveValue)
 		})
 		r.Route("/value", func(r chi.Router) {
-			r.Get("/guage/{name}", handler.GetGuage)
+			r.Get("/gauge/{name}", handler.GetGauge)
 			r.Get("/counter/{name}", handler.GetCounter)
 			r.Post("/", handler.GetValue)
 		})

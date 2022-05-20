@@ -48,12 +48,12 @@ func (r *Reporter) report(ctx context.Context) {
 	for {
 		select {
 		case <-r.ticker.C:
-			for name, value := range r.storage.GetGuages() {
-				guageValue := float64(value)
+			for name, value := range r.storage.GetGauges() {
+				gaugeValue := float64(value)
 				metric := structure.Metrics{
 					ID:    name,
 					MType: "gauge",
-					Value: &guageValue,
+					Value: &gaugeValue,
 				}
 				metricJSON, err := json.Marshal(metric)
 				if err != nil {

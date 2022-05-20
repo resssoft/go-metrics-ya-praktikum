@@ -33,7 +33,7 @@ func NewMetricsSaver(storage structure.Storage) MetricsSaver {
 	}
 }
 
-func (ms *MetricsSaver) SaveGuage(rw http.ResponseWriter, req *http.Request) {
+func (ms *MetricsSaver) SaveGauge(rw http.ResponseWriter, req *http.Request) {
 	fmt.Println(req.URL.Path)
 	name := chi.URLParam(req, "name")
 	value := chi.URLParam(req, "value")
@@ -43,7 +43,7 @@ func (ms *MetricsSaver) SaveGuage(rw http.ResponseWriter, req *http.Request) {
 		fmt.Fprintf(rw, "value parsing error: %v", err.Error())
 		return
 	}
-	ms.storage.SaveGuage(name, models.Gauge(valueFloat64))
+	ms.storage.SaveGauge(name, models.Gauge(valueFloat64))
 }
 
 func (ms *MetricsSaver) SaveCounter(rw http.ResponseWriter, req *http.Request) {
@@ -59,14 +59,14 @@ func (ms *MetricsSaver) SaveCounter(rw http.ResponseWriter, req *http.Request) {
 	ms.storage.IncrementCounter(name, models.Counter(valueInt64))
 }
 
-func (ms *MetricsSaver) GetGuage(rw http.ResponseWriter, req *http.Request) {
+func (ms *MetricsSaver) GetGauge(rw http.ResponseWriter, req *http.Request) {
 	fmt.Println(req.URL.Path)
 	name := chi.URLParam(req, "name")
 	if name == "" {
 		rw.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	val, err := ms.storage.GetGuage(name)
+	val, err := ms.storage.GetGauge(name)
 	if err != nil {
 		rw.WriteHeader(http.StatusNotFound)
 		fmt.Fprintf(rw, "%v", err.Error())
@@ -114,13 +114,13 @@ func (ms *MetricsSaver) SaveValue(rw http.ResponseWriter, req *http.Request) {
 		}
 		ms.storage.IncrementCounter(metrics.ID, models.Counter(*metrics.Delta))
 		rw.WriteHeader(http.StatusNoContent)
-	case "gauge", "guage":
+	case "gauge":
 		if metrics.Value == nil {
 			rw.WriteHeader(http.StatusBadRequest)
 			fmt.Fprintf(rw, "Value is empty")
 			return
 		}
-		ms.storage.SaveGuage(metrics.ID, models.Gauge(*metrics.Value))
+		ms.storage.SaveGauge(metrics.ID, models.Gauge(*metrics.Value))
 		rw.WriteHeader(http.StatusNoContent)
 	default:
 		rw.WriteHeader(http.StatusForbidden)
@@ -152,7 +152,7 @@ func (ms *MetricsSaver) GetValue(rw http.ResponseWriter, req *http.Request) {
 		}
 		fmt.Fprintf(rw, "%v", val)
 	case "gauge":
-		val, err := ms.storage.GetGuage(metrics.ID)
+		val, err := ms.storage.GetGauge(metrics.ID)
 		if err != nil {
 			rw.WriteHeader(http.StatusOK)
 			fmt.Fprintf(rw, "%v", err.Error())
@@ -175,10 +175,10 @@ type tmp struct {
 }
 
 func (ms *MetricsSaver) GetAll(rw http.ResponseWriter, req *http.Request) {
-	guages := ms.storage.GetGuages()
+	gauges := ms.storage.GetGauges()
 	counters := ms.storage.GetCounters()
 	var values []tmpValue
-	for key, value := range guages {
+	for key, value := range gauges {
 		values = append(values, tmpValue{
 			key,
 			fmt.Sprintf("%v", value),

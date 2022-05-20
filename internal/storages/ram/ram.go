@@ -26,7 +26,7 @@ func New() structure.Storage {
 	}
 }
 
-func (s *simpleRAMStorage) SaveGuage(key string, val models.Gauge) {
+func (s *simpleRAMStorage) SaveGauge(key string, val models.Gauge) {
 	s.storage.Lock()
 	s.storage.GaugeData[key] = val
 	s.storage.Unlock()
@@ -38,7 +38,7 @@ func (s *simpleRAMStorage) SaveCounter(key string, val models.Counter) {
 	s.storage.Unlock()
 }
 
-func (s *simpleRAMStorage) GetGuages() map[string]models.Gauge {
+func (s *simpleRAMStorage) GetGauges() map[string]models.Gauge {
 	result := make(map[string]models.Gauge)
 	s.storage.Lock()
 	for k, v := range s.storage.GaugeData {
@@ -79,7 +79,7 @@ func (s *simpleRAMStorage) GetCounter(key string) (models.Counter, error) {
 	return value, err
 }
 
-func (s *simpleRAMStorage) GetGuage(key string) (models.Gauge, error) {
+func (s *simpleRAMStorage) GetGauge(key string) (models.Gauge, error) {
 	var err error = nil
 	s.storage.Lock()
 	value, ok := s.storage.GaugeData[key]

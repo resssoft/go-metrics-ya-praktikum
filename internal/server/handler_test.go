@@ -12,13 +12,13 @@ import (
 
 type mockStorage struct{}
 
-func (s *mockStorage) SaveGuage(key string, val models.Gauge)          {}
+func (s *mockStorage) SaveGauge(key string, val models.Gauge)          {}
 func (s *mockStorage) SaveCounter(key string, val models.Counter)      {}
-func (s *mockStorage) GetGuages() map[string]models.Gauge              { return nil }
+func (s *mockStorage) GetGauges() map[string]models.Gauge              { return nil }
 func (s *mockStorage) GetCounters() map[string]models.Counter          { return nil }
 func (s *mockStorage) IncrementCounter(key string, val models.Counter) {}
 func (s *mockStorage) GetCounter(string) (models.Counter, error)       { return models.Counter(0), nil }
-func (s *mockStorage) GetGuage(string) (models.Gauge, error)           { return models.Gauge(0), nil }
+func (s *mockStorage) GetGauge(string) (models.Gauge, error)           { return models.Gauge(0), nil }
 
 func TestRouter(t *testing.T) {
 	storage := mockStorage{}
@@ -47,21 +47,21 @@ func TestRouter(t *testing.T) {
 			},
 		},
 		{
-			name: "positive guage test",
+			name: "positive gauge test",
 			want: want{
 				method:      http.MethodPost,
 				code:        200,
 				contentType: "text/plain",
-				uri:         "/update/guage/test/2.0",
+				uri:         "/update/gauge/test/2.0",
 			},
 		},
 		{
-			name: "antipositive guage test",
+			name: "antipositive gauge test",
 			want: want{
 				method:      http.MethodGet,
 				code:        405,
 				contentType: "text/plain",
-				uri:         "/update/guage/test/2.0",
+				uri:         "/update/gauge/test/2.0",
 			},
 		},
 		{
@@ -70,7 +70,7 @@ func TestRouter(t *testing.T) {
 				method:      http.MethodPost,
 				code:        404,
 				contentType: "text/plain",
-				uri:         "/update/guage/test2.0",
+				uri:         "/update/gauge/test2.0",
 			},
 		},
 		{
@@ -93,13 +93,13 @@ func TestRouter(t *testing.T) {
 			},
 		},
 		{
-			name: "positive guage test value",
+			name: "positive gauge test value",
 			want: want{
 				method:      http.MethodGet,
 				code:        200,
 				response:    "0",
 				contentType: "text/plain",
-				uri:         "/value/guage/test",
+				uri:         "/value/gauge/test",
 			},
 		},
 		{
