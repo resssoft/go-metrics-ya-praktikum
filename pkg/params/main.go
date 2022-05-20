@@ -26,3 +26,10 @@ func StrByEnv(s, evnName string) string {
 	}
 	return s
 }
+
+func BoolByEnv(s bool, evnName string) bool {
+	if os.Getenv(evnName) != "" {
+		s = os.Getenv(evnName) == "true"
+	}
+	return s
+}
