@@ -13,10 +13,12 @@ func Router(storage structure.Storage) chi.Router {
 		r.Route("/update", func(r chi.Router) {
 			r.Post("/guage/{name}/{value}", handler.SaveGuage)
 			r.Post("/counter/{name}/{value}", handler.SaveCounter)
+			r.Post("/", handler.SaveValue)
 		})
 		r.Route("/value", func(r chi.Router) {
 			r.Get("/guage/{name}", handler.GetGuage)
 			r.Get("/counter/{name}", handler.GetCounter)
+			r.Post("/", handler.GetValue)
 		})
 	})
 	return router

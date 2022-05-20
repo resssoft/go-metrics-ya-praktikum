@@ -2,11 +2,13 @@ package server
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"github.com/go-chi/chi/v5"
 	"github.com/resssoft/go-metrics-ya-praktikum/internal/models"
 	"github.com/resssoft/go-metrics-ya-praktikum/internal/structure"
 	"html/template"
+	"io/ioutil"
 	"net/http"
 	"strconv"
 )
@@ -85,6 +87,82 @@ func (ms *MetricsSaver) GetCounter(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 	fmt.Fprintf(rw, "%v", val)
+}
+
+func (ms *MetricsSaver) SaveValue(rw http.ResponseWriter, req *http.Request) {
+	metrics := structure.Metrics{}
+	respBody, err := ioutil.ReadAll(req.Body)
+	if err != nil {
+		rw.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprintf(rw, "%v", err.Error())
+		return
+	}
+	err = json.Unmarshal(respBody, &metrics)
+	if err != nil {
+		rw.WriteHeader(http.StatusBadRequest)
+		fmt.Fprintf(rw, "%v", err.Error())
+		return
+	}
+	switch metrics.MType {
+	case "counter":
+		if metrics.Delta == nil {
+			rw.WriteHeader(http.StatusBadRequest)
+			fmt.Fprintf(rw, "Delta is empty")
+			return
+		}
+		ms.storage.IncrementCounter(metrics.ID, models.Counter(*metrics.Delta))
+		rw.WriteHeader(http.StatusNoContent)
+	case "gauge":
+		if metrics.Value == nil {
+			rw.WriteHeader(http.StatusBadRequest)
+			fmt.Fprintf(rw, "Value is empty")
+			return
+		}
+		ms.storage.SaveGuage(metrics.ID, models.Gauge(*metrics.Value))
+		rw.WriteHeader(http.StatusNoContent)
+	default:
+		rw.WriteHeader(http.StatusForbidden)
+		fmt.Fprintf(rw, "%v", err.Error())
+		return
+	}
+}
+
+func (ms *MetricsSaver) GetValue(rw http.ResponseWriter, req *http.Request) {
+	metrics := structure.Metrics{}
+	respBody, err := ioutil.ReadAll(req.Body)
+	if err != nil {
+		rw.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprintf(rw, "%v", err.Error())
+		return
+	}
+	err = json.Unmarshal(respBody, &metrics)
+	if err != nil {
+		rw.WriteHeader(http.StatusBadRequest)
+		fmt.Fprintf(rw, "%v", err.Error())
+		return
+	}
+	switch metrics.MType {
+	case "counter":
+		val, err := ms.storage.GetCounter(metrics.ID)
+		if err != nil {
+			rw.WriteHeader(http.StatusOK)
+			fmt.Fprintf(rw, "%v", err.Error())
+			return
+		}
+		fmt.Fprintf(rw, "%v", val)
+	case "gauge":
+		val, err := ms.storage.GetGuage(metrics.ID)
+		if err != nil {
+			rw.WriteHeader(http.StatusOK)
+			fmt.Fprintf(rw, "%v", err.Error())
+			return
+		}
+		fmt.Fprintf(rw, "%v", val)
+	default:
+		rw.WriteHeader(http.StatusForbidden)
+		fmt.Fprintf(rw, "%v", err.Error())
+		return
+	}
 }
 
 type tmpValue struct {
