@@ -48,5 +48,6 @@ func main() {
 			fmt.Println("Unknown signal.")
 		}
 	}()
+
 	<-exitChan
 }
