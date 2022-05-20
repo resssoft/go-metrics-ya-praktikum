@@ -55,7 +55,7 @@ func (r *Reporter) report(ctx context.Context) {
 					MType: "gauge",
 					Value: &guageValue,
 				}
-				metricJson, err := json.Marshal(metric)
+				metricJSON, err := json.Marshal(metric)
 				if err != nil {
 					fmt.Println(err)
 					return
@@ -63,7 +63,7 @@ func (r *Reporter) report(ctx context.Context) {
 				response, err := http.Post(fmt.Sprintf(
 					reportURL,
 					defaultAddress,
-					defaultPort), "application/json", bytes.NewBuffer(metricJson))
+					defaultPort), "application/json", bytes.NewBuffer(metricJSON))
 				if err != nil {
 					fmt.Println(err)
 					return
