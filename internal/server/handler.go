@@ -72,6 +72,7 @@ func (ms *MetricsSaver) GetGauge(rw http.ResponseWriter, req *http.Request) {
 		fmt.Fprintf(rw, "%v", err.Error())
 		return
 	}
+	rw.Header().Set("Content-Type", "application/json")
 	fmt.Fprintf(rw, "%v", val)
 }
 
@@ -87,6 +88,7 @@ func (ms *MetricsSaver) GetCounter(rw http.ResponseWriter, req *http.Request) {
 		fmt.Fprintf(rw, "%v", err.Error())
 		return
 	}
+	rw.Header().Set("Content-Type", "application/json")
 	fmt.Fprintf(rw, "%v", val)
 }
 
@@ -146,19 +148,38 @@ func (ms *MetricsSaver) GetValue(rw http.ResponseWriter, req *http.Request) {
 	case "counter":
 		val, err := ms.storage.GetCounter(metrics.ID)
 		if err != nil {
-			rw.WriteHeader(http.StatusOK)
+			rw.WriteHeader(http.StatusForbidden)
 			fmt.Fprintf(rw, "%v", err.Error())
 			return
 		}
-		fmt.Fprintf(rw, "%v", val)
+		intVal := int64(val)
+		metrics.Delta = &intVal
+		metricJSON, err := json.Marshal(metrics)
+		if err != nil {
+			rw.WriteHeader(http.StatusForbidden)
+			fmt.Fprintf(rw, "%v", err.Error())
+			return
+		}
+		rw.Header().Set("Content-Type", "application/json")
+		fmt.Fprintf(rw, "%s", string(metricJSON))
 	case "gauge":
 		val, err := ms.storage.GetGauge(metrics.ID)
+		floatVal := float64(val)
+		metrics.Value = &floatVal
 		if err != nil {
-			rw.WriteHeader(http.StatusOK)
+			rw.WriteHeader(http.StatusForbidden)
 			fmt.Fprintf(rw, "%v", err.Error())
 			return
 		}
-		fmt.Fprintf(rw, "%v", val)
+
+		metricJSON, err := json.Marshal(metrics)
+		if err != nil {
+			rw.WriteHeader(http.StatusForbidden)
+			fmt.Fprintf(rw, "%v", err.Error())
+			return
+		}
+		rw.Header().Set("Content-Type", "application/json")
+		fmt.Fprintf(rw, "%s", string(metricJSON))
 	default:
 		rw.WriteHeader(http.StatusForbidden)
 		return
@@ -199,5 +220,10 @@ func (ms *MetricsSaver) GetAll(rw http.ResponseWriter, req *http.Request) {
 		fmt.Fprintf(rw, "%v", err.Error())
 		return
 	}
+	rw.Header().Set("Content-Type", "text/html; charset=utf-8")
 	fmt.Fprintf(rw, "%v", tpl.String())
+}
+
+func (ms *MetricsSaver) h501(rw http.ResponseWriter, req *http.Request) {
+	rw.WriteHeader(http.StatusNotImplemented)
 }
