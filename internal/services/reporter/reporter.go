@@ -12,9 +12,8 @@ import (
 )
 
 var (
-	reportURL      = "http://%s:%s/update/" // New: http://%s:%s/update/ Old:http://address:port/update/<type>/<name>/<value>
-	defaultAddress = "127.0.0.1"
-	defaultPort    = "8080"
+	reportURL  = "http://%s/update/" // New: http://%s/update/ Old:http://address:port/update/<type>/<name>/<value>
+	apiAddress = "127.0.0.1"
 )
 
 type Reporter struct {
@@ -25,7 +24,9 @@ type Reporter struct {
 
 func New(
 	duration time.Duration,
+	address string,
 	storage structure.Storage) structure.Task {
+	apiAddress = address
 	return &Reporter{
 		Duration: duration,
 		storage:  storage,
@@ -62,8 +63,7 @@ func (r *Reporter) report(ctx context.Context) {
 				}
 				response, err := http.Post(fmt.Sprintf(
 					reportURL,
-					defaultAddress,
-					defaultPort), "application/json", bytes.NewBuffer(metricJSON))
+					apiAddress), "application/json", bytes.NewBuffer(metricJSON))
 				if err != nil {
 					fmt.Println(err)
 					return
@@ -78,8 +78,7 @@ func (r *Reporter) report(ctx context.Context) {
 			for name, value := range r.storage.GetCounters() {
 				response, err := http.Post(fmt.Sprintf(
 					reportURL,
-					defaultAddress,
-					defaultPort,
+					apiAddress,
 					"counter",
 					name,
 					value), "text/plain", nil)

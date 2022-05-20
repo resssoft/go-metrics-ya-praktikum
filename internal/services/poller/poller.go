@@ -10,8 +10,6 @@ import (
 	"time"
 )
 
-const workers = 1
-
 type Poller struct {
 	Duration time.Duration
 	ticker   *time.Ticker

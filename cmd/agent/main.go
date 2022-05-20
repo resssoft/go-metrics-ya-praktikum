@@ -5,15 +5,17 @@ import (
 	"github.com/resssoft/go-metrics-ya-praktikum/internal/services/poller"
 	"github.com/resssoft/go-metrics-ya-praktikum/internal/services/reporter"
 	ramstorage "github.com/resssoft/go-metrics-ya-praktikum/internal/storages/ram"
+	"github.com/resssoft/go-metrics-ya-praktikum/pkg/params"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 )
 
-const (
+var (
 	pollInterval   = time.Second * 2
 	reportInterval = time.Second * 10
+	address        = "127.0.0.1:8080"
 )
 
 var (
@@ -21,11 +23,19 @@ var (
 )
 
 func main() {
-	fmt.Println("Start agent")
+	reportInterval = params.DurationByEnv(reportInterval, "REPORT_INTERVAL")
+	pollInterval = params.DurationByEnv(pollInterval, "POLL_INTERVAL")
+	address = params.StrByEnv(address, "ADDRESS")
+
+	fmt.Println(fmt.Sprintf(
+		"Start agent with intervals for poll: %v, for report: %v and api address: %s",
+		pollInterval,
+		reportInterval,
+		address))
 	exitChan = make(chan int)
 	storage := ramstorage.New()
 	pollerService := poller.New(pollInterval, storage)
-	reporterService := reporter.New(reportInterval, storage)
+	reporterService := reporter.New(reportInterval, address, storage)
 
 	cancelPoller := pollerService.Start()
 	cancelReporter := reporterService.Start()
