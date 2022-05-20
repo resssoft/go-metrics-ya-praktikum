@@ -27,12 +27,12 @@ func main() {
 	storePath := params.StrByEnv(*storePathFlag, "STORE_FILE")
 	restore := params.BoolByEnv(*restoreFlag, "RESTORE")
 
-	fmt.Printf(fmt.Sprintf(
+	fmt.Printf(
 		"Start server by address: %s store duration: %v restore flag: %v and store file: %s \n",
 		address,
 		storeInterval,
 		restore,
-		storePath))
+		storePath)
 	storage := ramstorage.New()
 	writerService := writer.New(storeInterval, storePath, restore, storage)
 	cansel := writerService.Start()

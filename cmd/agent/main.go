@@ -23,11 +23,11 @@ func main() {
 	pollInterval := params.DurationByEnv(*pollIntervalIntervalFlag, "POLL_INTERVAL")
 	address := params.StrByEnv(*addressFlag, "ADDRESS")
 
-	fmt.Printf(fmt.Sprintf(
+	fmt.Printf(
 		"Start agent with intervals for poll: %v, for report: %v and api address: %s \n",
 		pollInterval,
 		reportInterval,
-		address))
+		address)
 	storage := ramstorage.New()
 	pollerService := poller.New(pollInterval, storage)
 	reporterService := reporter.New(reportInterval, address, storage)
