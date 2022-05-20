@@ -11,8 +11,6 @@ import (
 	"time"
 )
 
-const workers = 1
-
 var (
 	reportURL      = "http://%s:%s/update/" // New: http://%s:%s/update/ Old:http://address:port/update/<type>/<name>/<value>
 	defaultAddress = "127.0.0.1"
@@ -23,7 +21,6 @@ type Reporter struct {
 	Duration time.Duration
 	ticker   *time.Ticker
 	storage  structure.Storage
-	exitChan chan int
 }
 
 func New(
@@ -32,24 +29,18 @@ func New(
 	return &Reporter{
 		Duration: duration,
 		storage:  storage,
-		exitChan: make(chan int),
 	}
 }
 
 func (r *Reporter) Start() context.CancelFunc {
 	ctx, cancel := context.WithCancel(context.Background())
 	r.ticker = time.NewTicker(r.Duration)
-	for i := 0; i < workers; i++ {
-		go r.report(ctx)
-	}
+	go r.report(ctx)
 	return cancel
 }
 
 func (r *Reporter) Stop(cancel context.CancelFunc) {
 	cancel()
-	for i := 0; i < workers; i++ {
-		<-r.exitChan
-	}
 }
 
 func (r *Reporter) report(ctx context.Context) {
@@ -105,7 +96,6 @@ func (r *Reporter) report(ctx context.Context) {
 			}
 		case <-ctx.Done():
 			fmt.Println("break report")
-			r.exitChan <- 1
 			return
 		}
 	}

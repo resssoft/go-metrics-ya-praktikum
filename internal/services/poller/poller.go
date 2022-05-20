@@ -17,7 +17,6 @@ type Poller struct {
 	ticker   *time.Ticker
 	iterator int
 	storage  structure.Storage
-	exitChan chan int
 }
 
 func New(
@@ -26,24 +25,18 @@ func New(
 	return &Poller{
 		Duration: duration,
 		storage:  storage,
-		exitChan: make(chan int),
 	}
 }
 
 func (p *Poller) Start() context.CancelFunc {
 	ctx, cancel := context.WithCancel(context.Background())
 	p.ticker = time.NewTicker(p.Duration)
-	for i := 0; i < workers; i++ {
-		go p.poll(ctx)
-	}
+	go p.poll(ctx)
 	return cancel
 }
 
 func (p *Poller) Stop(cancel context.CancelFunc) {
 	cancel()
-	for i := 0; i < workers; i++ {
-		<-p.exitChan
-	}
 }
 
 func (p *Poller) poll(ctx context.Context) {
@@ -92,7 +85,6 @@ func (p *Poller) poll(ctx context.Context) {
 
 		case <-ctx.Done():
 			fmt.Println("break poll")
-			p.exitChan <- 1
 			return
 		}
 	}
