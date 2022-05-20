@@ -1,12 +1,25 @@
 package server
 
 import (
+	"compress/gzip"
+	"fmt"
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 	"github.com/resssoft/go-metrics-ya-praktikum/internal/structure"
+	"io"
+	"net/http"
+	"strings"
 )
+
+type gzipWriter struct {
+	http.ResponseWriter
+	Writer io.Writer
+}
 
 func Router(storage structure.Storage) chi.Router {
 	router := chi.NewRouter()
+	router.Use(middleware.Recoverer)
+	router.Use(gzipHandle)
 	handler := NewMetricsSaver(storage)
 	router.Route("/", func(r chi.Router) {
 		r.Get("/", handler.GetAll)
@@ -30,4 +43,26 @@ func Router(storage structure.Storage) chi.Router {
 		})
 	})
 	return router
+}
+
+func (w gzipWriter) Write(b []byte) (int, error) {
+	return w.Writer.Write(b)
+}
+
+func gzipHandle(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fmt.Println("Hit the page")
+		if !strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") {
+			next.ServeHTTP(w, r)
+			return
+		}
+		gz, err := gzip.NewWriterLevel(w, gzip.BestSpeed)
+		if err != nil {
+			io.WriteString(w, err.Error())
+			return
+		}
+		defer gz.Close()
+		w.Header().Set("Content-Encoding", "gzip")
+		next.ServeHTTP(gzipWriter{ResponseWriter: w, Writer: gz}, r)
+	})
 }
