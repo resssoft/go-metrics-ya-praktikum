@@ -7,6 +7,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/resssoft/go-metrics-ya-praktikum/internal/models"
 	"github.com/resssoft/go-metrics-ya-praktikum/internal/structure"
+	"github.com/rs/zerolog/log"
 	"html/template"
 	"io/ioutil"
 	"net/http"
@@ -103,6 +104,7 @@ func (ms *MetricsSaver) SaveValue(rw http.ResponseWriter, req *http.Request) {
 		fmt.Fprintf(rw, "%v", err.Error())
 		return
 	}
+	log.Info().Interface("metrics", metrics).Send()
 	switch metrics.MType {
 	case "counter":
 		if metrics.Delta == nil {
@@ -112,7 +114,7 @@ func (ms *MetricsSaver) SaveValue(rw http.ResponseWriter, req *http.Request) {
 		}
 		ms.storage.IncrementCounter(metrics.ID, models.Counter(*metrics.Delta))
 		rw.WriteHeader(http.StatusNoContent)
-	case "gauge":
+	case "gauge", "guage":
 		if metrics.Value == nil {
 			rw.WriteHeader(http.StatusBadRequest)
 			fmt.Fprintf(rw, "Value is empty")
@@ -122,7 +124,6 @@ func (ms *MetricsSaver) SaveValue(rw http.ResponseWriter, req *http.Request) {
 		rw.WriteHeader(http.StatusNoContent)
 	default:
 		rw.WriteHeader(http.StatusForbidden)
-		fmt.Fprintf(rw, "%v", err.Error())
 		return
 	}
 }
@@ -160,7 +161,6 @@ func (ms *MetricsSaver) GetValue(rw http.ResponseWriter, req *http.Request) {
 		fmt.Fprintf(rw, "%v", val)
 	default:
 		rw.WriteHeader(http.StatusForbidden)
-		fmt.Fprintf(rw, "%v", err.Error())
 		return
 	}
 }

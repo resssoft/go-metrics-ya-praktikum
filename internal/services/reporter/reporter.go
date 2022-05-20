@@ -1,7 +1,9 @@
 package reporter
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/resssoft/go-metrics-ya-praktikum/internal/structure"
 	"io/ioutil"
@@ -12,7 +14,7 @@ import (
 const workers = 1
 
 var (
-	reportURL      = "http://%s:%s/update/%s/%s/%v" // http://address:port/update/<type>/<name>/<value>
+	reportURL      = "http://%s:%s/update/" // New: http://%s:%s/update/ Old:http://address:port/update/<type>/<name>/<value>
 	defaultAddress = "127.0.0.1"
 	defaultPort    = "8080"
 )
@@ -56,13 +58,21 @@ func (r *Reporter) report(ctx context.Context) {
 		select {
 		case <-r.ticker.C:
 			for name, value := range r.storage.GetGuages() {
+				guageValue := float64(value)
+				metric := structure.Metrics{
+					ID:    name,
+					MType: "gauge",
+					Value: &guageValue,
+				}
+				metricJson, err := json.Marshal(metric)
+				if err != nil {
+					fmt.Println(err)
+					return
+				}
 				response, err := http.Post(fmt.Sprintf(
 					reportURL,
 					defaultAddress,
-					defaultPort,
-					"guage",
-					name,
-					value), "text/plain", nil)
+					defaultPort), "application/json", bytes.NewBuffer(metricJson))
 				if err != nil {
 					fmt.Println(err)
 					return
