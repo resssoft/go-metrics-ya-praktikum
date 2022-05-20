@@ -115,7 +115,7 @@ func (ms *MetricsSaver) SaveValue(rw http.ResponseWriter, req *http.Request) {
 			return
 		}
 		ms.storage.IncrementCounter(metrics.ID, models.Counter(*metrics.Delta))
-		rw.WriteHeader(http.StatusNoContent)
+		rw.WriteHeader(http.StatusOK)
 	case "gauge":
 		if metrics.Value == nil {
 			rw.WriteHeader(http.StatusBadRequest)
@@ -123,7 +123,7 @@ func (ms *MetricsSaver) SaveValue(rw http.ResponseWriter, req *http.Request) {
 			return
 		}
 		ms.storage.SaveGauge(metrics.ID, models.Gauge(*metrics.Value))
-		rw.WriteHeader(http.StatusNoContent)
+		rw.WriteHeader(http.StatusOK)
 	default:
 		rw.WriteHeader(http.StatusForbidden)
 		return
@@ -226,4 +226,8 @@ func (ms *MetricsSaver) GetAll(rw http.ResponseWriter, req *http.Request) {
 
 func (ms *MetricsSaver) h501(rw http.ResponseWriter, req *http.Request) {
 	rw.WriteHeader(http.StatusNotImplemented)
+}
+
+func (ms *MetricsSaver) h404(rw http.ResponseWriter, req *http.Request) {
+	rw.WriteHeader(http.StatusNotFound)
 }
