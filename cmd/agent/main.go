@@ -15,8 +15,8 @@ import (
 
 func main() {
 	addressFlag := flag.String("a", "127.0.0.1:8080", "server address")
-	reportIntervalIntervalFlag := flag.Duration("r", time.Second*10, "agent report interval")
-	pollIntervalIntervalFlag := flag.Duration("p", time.Second*10, "agent poll interval")
+	reportIntervalIntervalFlag := flag.Duration("r", time.Second*5, "agent report interval")
+	pollIntervalIntervalFlag := flag.Duration("p", time.Second*2, "agent poll interval")
 	flag.Parse()
 
 	reportInterval := params.DurationByEnv(*reportIntervalIntervalFlag, "REPORT_INTERVAL")
