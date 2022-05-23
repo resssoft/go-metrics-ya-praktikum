@@ -100,6 +100,7 @@ func (ms *MetricsSaver) SaveValue(rw http.ResponseWriter, req *http.Request) {
 		fmt.Fprintf(rw, "%v", err.Error())
 		return
 	}
+	fmt.Println("SaveValue", req.URL.Path, string(respBody))
 	err = json.Unmarshal(respBody, &metrics)
 	if err != nil {
 		rw.WriteHeader(http.StatusBadRequest)
@@ -138,6 +139,7 @@ func (ms *MetricsSaver) GetValue(rw http.ResponseWriter, req *http.Request) {
 		fmt.Fprintf(rw, "%v", err.Error())
 		return
 	}
+	fmt.Println("GetValue", req.URL.Path, string(respBody))
 	err = json.Unmarshal(respBody, &metrics)
 	if err != nil {
 		rw.WriteHeader(http.StatusBadRequest)
@@ -148,7 +150,7 @@ func (ms *MetricsSaver) GetValue(rw http.ResponseWriter, req *http.Request) {
 	case "counter":
 		val, err := ms.storage.GetCounter(metrics.ID)
 		if err != nil {
-			rw.WriteHeader(http.StatusForbidden)
+			rw.WriteHeader(http.StatusNotFound)
 			fmt.Fprintf(rw, "%v", err.Error())
 			return
 		}

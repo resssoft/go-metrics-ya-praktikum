@@ -44,6 +44,7 @@ func main() {
 		syscall.SIGQUIT)
 	go func() {
 		s := <-signalChanel
+		fmt.Printf("New OS signal: %v \n", s)
 		switch s {
 		case syscall.SIGQUIT, syscall.SIGINT, syscall.SIGTERM:
 			fmt.Println("Signal quit triggered.")
