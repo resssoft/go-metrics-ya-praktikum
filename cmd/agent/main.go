@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"testing"
 	"time"
 )
 
@@ -53,4 +54,8 @@ func main() {
 			fmt.Println("Unknown signal.")
 		}
 	}()
+}
+
+func Test_main(t *testing.T) {
+	t.Skip()
 }

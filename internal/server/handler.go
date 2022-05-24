@@ -139,6 +139,7 @@ func (ms *MetricsSaver) GetValue(rw http.ResponseWriter, req *http.Request) {
 		fmt.Fprintf(rw, "%v", err.Error())
 		return
 	}
+	rw.Header().Set("Content-Type", "application/json")
 	fmt.Println("GetValue", req.URL.Path, string(respBody))
 	err = json.Unmarshal(respBody, &metrics)
 	if err != nil {

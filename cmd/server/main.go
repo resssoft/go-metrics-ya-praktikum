@@ -12,6 +12,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"testing"
 	"time"
 )
 
@@ -56,4 +57,8 @@ func main() {
 	}()
 
 	log.Fatal(http.ListenAndServe(address, server.Router(storage)))
+}
+
+func Test_main(t *testing.T) {
+	t.Skip()
 }
