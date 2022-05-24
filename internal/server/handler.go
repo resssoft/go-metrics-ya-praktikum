@@ -158,7 +158,7 @@ func (ms *MetricsSaver) GetValue(rw http.ResponseWriter, req *http.Request) {
 	case "counter":
 		val, err := ms.storage.GetCounter(metrics.ID)
 		if err != nil {
-			rw.Header().Set("Content-Type", "text/html; charset=utf-8")
+			rw.Header().Set("Content-Type", "application/json")
 			rw.WriteHeader(http.StatusNotFound)
 			http.Error(rw, err.Error(), http.StatusInternalServerError)
 			return
@@ -184,7 +184,7 @@ func (ms *MetricsSaver) GetValue(rw http.ResponseWriter, req *http.Request) {
 		}
 		metricJSON, err := json.Marshal(metrics)
 		if err != nil {
-			rw.Header().Set("Content-Type", "text/html; charset=utf-8")
+			rw.Header().Set("Content-Type", "application/json")
 			rw.WriteHeader(http.StatusForbidden)
 			http.Error(rw, err.Error(), http.StatusInternalServerError)
 			return
