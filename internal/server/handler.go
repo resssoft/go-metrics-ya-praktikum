@@ -96,6 +96,7 @@ func (ms *MetricsSaver) SaveValue(rw http.ResponseWriter, req *http.Request) {
 	metrics := structure.Metrics{}
 	respBody, err := ioutil.ReadAll(req.Body)
 	if err != nil {
+		rw.Header().Set("Content-Type", "text/html; charset=utf-8")
 		rw.WriteHeader(http.StatusInternalServerError)
 		http.Error(rw, err.Error(), http.StatusInternalServerError)
 		return
@@ -103,6 +104,7 @@ func (ms *MetricsSaver) SaveValue(rw http.ResponseWriter, req *http.Request) {
 	fmt.Println("SaveValue", req.URL.Path, string(respBody))
 	err = json.Unmarshal(respBody, &metrics)
 	if err != nil {
+		rw.Header().Set("Content-Type", "text/html; charset=utf-8")
 		rw.WriteHeader(http.StatusBadRequest)
 		http.Error(rw, err.Error(), http.StatusInternalServerError)
 		return
@@ -111,6 +113,7 @@ func (ms *MetricsSaver) SaveValue(rw http.ResponseWriter, req *http.Request) {
 	switch metrics.MType {
 	case "counter":
 		if metrics.Delta == nil {
+			rw.Header().Set("Content-Type", "text/html; charset=utf-8")
 			rw.WriteHeader(http.StatusBadRequest)
 			http.Error(rw, "Delta is empty", http.StatusInternalServerError)
 			return
@@ -119,6 +122,7 @@ func (ms *MetricsSaver) SaveValue(rw http.ResponseWriter, req *http.Request) {
 		rw.WriteHeader(http.StatusOK)
 	case "gauge":
 		if metrics.Value == nil {
+			rw.Header().Set("Content-Type", "text/html; charset=utf-8")
 			rw.WriteHeader(http.StatusBadRequest)
 			http.Error(rw, "Value is empty", http.StatusInternalServerError)
 			return
@@ -126,6 +130,7 @@ func (ms *MetricsSaver) SaveValue(rw http.ResponseWriter, req *http.Request) {
 		ms.storage.SaveGauge(metrics.ID, models.Gauge(*metrics.Value))
 		rw.WriteHeader(http.StatusOK)
 	default:
+		rw.Header().Set("Content-Type", "text/html; charset=utf-8")
 		rw.WriteHeader(http.StatusForbidden)
 		return
 	}
@@ -139,10 +144,10 @@ func (ms *MetricsSaver) GetValue(rw http.ResponseWriter, req *http.Request) {
 		http.Error(rw, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	rw.Header().Set("Content-Type", "application/json")
 	fmt.Println("GetValue", req.URL.Path, string(respBody))
 	err = json.Unmarshal(respBody, &metrics)
 	if err != nil {
+		rw.Header().Set("Content-Type", "text/html; charset=utf-8")
 		rw.WriteHeader(http.StatusBadRequest)
 		http.Error(rw, err.Error(), http.StatusInternalServerError)
 		return
@@ -151,6 +156,7 @@ func (ms *MetricsSaver) GetValue(rw http.ResponseWriter, req *http.Request) {
 	case "counter":
 		val, err := ms.storage.GetCounter(metrics.ID)
 		if err != nil {
+			rw.Header().Set("Content-Type", "text/html; charset=utf-8")
 			rw.WriteHeader(http.StatusNotFound)
 			http.Error(rw, err.Error(), http.StatusInternalServerError)
 			return
@@ -159,6 +165,7 @@ func (ms *MetricsSaver) GetValue(rw http.ResponseWriter, req *http.Request) {
 		metrics.Delta = &intVal
 		metricJSON, err := json.Marshal(metrics)
 		if err != nil {
+			rw.Header().Set("Content-Type", "text/html; charset=utf-8")
 			rw.WriteHeader(http.StatusForbidden)
 			http.Error(rw, err.Error(), http.StatusInternalServerError)
 			return
@@ -170,6 +177,7 @@ func (ms *MetricsSaver) GetValue(rw http.ResponseWriter, req *http.Request) {
 		floatVal := float64(val)
 		metrics.Value = &floatVal
 		if err != nil {
+			rw.Header().Set("Content-Type", "text/html; charset=utf-8")
 			rw.WriteHeader(http.StatusForbidden)
 			http.Error(rw, err.Error(), http.StatusInternalServerError)
 			return
@@ -177,6 +185,7 @@ func (ms *MetricsSaver) GetValue(rw http.ResponseWriter, req *http.Request) {
 
 		metricJSON, err := json.Marshal(metrics)
 		if err != nil {
+			rw.Header().Set("Content-Type", "text/html; charset=utf-8")
 			rw.WriteHeader(http.StatusForbidden)
 			http.Error(rw, err.Error(), http.StatusInternalServerError)
 			return
