@@ -61,9 +61,6 @@ func (ms *MetricsSaver) SaveCounter(rw http.ResponseWriter, req *http.Request) {
 
 func (ms *MetricsSaver) GetGauge(rw http.ResponseWriter, req *http.Request) {
 	fmt.Println(req.URL.Path)
-
-	rw.Header().Set("Content-Type", "application/json")
-
 	name := chi.URLParam(req, "name")
 	if name == "" {
 		rw.WriteHeader(http.StatusBadRequest)
@@ -75,12 +72,12 @@ func (ms *MetricsSaver) GetGauge(rw http.ResponseWriter, req *http.Request) {
 		http.Error(rw, err.Error(), http.StatusInternalServerError)
 		return
 	}
+	rw.Header().Set("Content-Type", "application/json")
 	fmt.Fprintf(rw, "%v", val)
 }
 
 func (ms *MetricsSaver) GetCounter(rw http.ResponseWriter, req *http.Request) {
 	name := chi.URLParam(req, "name")
-	rw.Header().Set("Content-Type", "application/json")
 	if name == "" {
 		rw.WriteHeader(http.StatusBadRequest)
 		return
@@ -91,6 +88,7 @@ func (ms *MetricsSaver) GetCounter(rw http.ResponseWriter, req *http.Request) {
 		http.Error(rw, err.Error(), http.StatusInternalServerError)
 		return
 	}
+	rw.Header().Set("Content-Type", "application/json")
 	fmt.Fprintf(rw, "%v", val)
 }
 
@@ -157,7 +155,6 @@ func (ms *MetricsSaver) GetValue(rw http.ResponseWriter, req *http.Request) {
 	switch metrics.MType {
 	case "counter":
 		val, err := ms.storage.GetCounter(metrics.ID)
-		rw.Header().Set("Content-Type", "application/json")
 		if err != nil {
 			rw.Header().Set("Content-Type", "text/html; charset=utf-8")
 			rw.WriteHeader(http.StatusNotFound)
@@ -173,6 +170,7 @@ func (ms *MetricsSaver) GetValue(rw http.ResponseWriter, req *http.Request) {
 			http.Error(rw, err.Error(), http.StatusInternalServerError)
 			return
 		}
+		rw.Header().Set("Content-Type", "application/json")
 		fmt.Fprintf(rw, "%s", string(metricJSON))
 	case "gauge":
 		val, err := ms.storage.GetGauge(metrics.ID)
@@ -184,7 +182,7 @@ func (ms *MetricsSaver) GetValue(rw http.ResponseWriter, req *http.Request) {
 			http.Error(rw, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		rw.Header().Set("Content-Type", "application/json")
+
 		metricJSON, err := json.Marshal(metrics)
 		if err != nil {
 			rw.Header().Set("Content-Type", "text/html; charset=utf-8")
@@ -192,6 +190,7 @@ func (ms *MetricsSaver) GetValue(rw http.ResponseWriter, req *http.Request) {
 			http.Error(rw, err.Error(), http.StatusInternalServerError)
 			return
 		}
+		rw.Header().Set("Content-Type", "application/json")
 		fmt.Fprintf(rw, "%s", string(metricJSON))
 	default:
 		rw.WriteHeader(http.StatusForbidden)
