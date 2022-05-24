@@ -68,23 +68,23 @@ func TestRouter(t *testing.T) {
 			name: "antipositive test incorrect route",
 			want: want{
 				method:      http.MethodPost,
-				code:        404,
+				code:        501,
 				contentType: "text/plain",
 				uri:         "/update/gauge/test2.0",
 			},
 		},
 		{
-			name: "antipositive test incorrect route",
+			name: "antipositive test incorrect route 2",
 			want: want{
 				method:      http.MethodPost,
-				code:        404,
+				code:        501,
 				response:    "",
 				contentType: "text/plain",
 				uri:         "/update/counter/test/2/increment",
 			},
 		},
 		{
-			name: "antipositive test incorrect route",
+			name: "antipositive test incorrect route 3",
 			want: want{
 				method:      http.MethodPost,
 				code:        400,
