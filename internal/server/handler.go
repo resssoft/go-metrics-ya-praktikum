@@ -157,8 +157,9 @@ func (ms *MetricsSaver) GetValue(rw http.ResponseWriter, req *http.Request) {
 	switch metrics.MType {
 	case "counter":
 		val, err := ms.storage.GetCounter(metrics.ID)
+		rw.Header().Set("Content-Type", "application/json")
 		if err != nil {
-			rw.Header().Set("Content-Type", "application/json")
+			rw.Header().Set("Content-Type", "text/html; charset=utf-8")
 			rw.WriteHeader(http.StatusNotFound)
 			http.Error(rw, err.Error(), http.StatusInternalServerError)
 			return
@@ -167,6 +168,7 @@ func (ms *MetricsSaver) GetValue(rw http.ResponseWriter, req *http.Request) {
 		metrics.Delta = &intVal
 		metricJSON, err := json.Marshal(metrics)
 		if err != nil {
+			rw.Header().Set("Content-Type", "text/html; charset=utf-8")
 			rw.WriteHeader(http.StatusForbidden)
 			http.Error(rw, err.Error(), http.StatusInternalServerError)
 			return
@@ -182,9 +184,10 @@ func (ms *MetricsSaver) GetValue(rw http.ResponseWriter, req *http.Request) {
 			http.Error(rw, err.Error(), http.StatusInternalServerError)
 			return
 		}
+		rw.Header().Set("Content-Type", "application/json")
 		metricJSON, err := json.Marshal(metrics)
 		if err != nil {
-			rw.Header().Set("Content-Type", "application/json")
+			rw.Header().Set("Content-Type", "text/html; charset=utf-8")
 			rw.WriteHeader(http.StatusForbidden)
 			http.Error(rw, err.Error(), http.StatusInternalServerError)
 			return
