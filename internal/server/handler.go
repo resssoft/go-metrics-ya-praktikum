@@ -69,7 +69,7 @@ func (ms *MetricsSaver) GetGauge(rw http.ResponseWriter, req *http.Request) {
 	val, err := ms.storage.GetGauge(name)
 	if err != nil {
 		rw.WriteHeader(http.StatusNotFound)
-		fmt.Fprintf(rw, "%v", err.Error())
+		http.Error(rw, err.Error(), http.StatusInternalServerError)
 		return
 	}
 	rw.Header().Set("Content-Type", "application/json")
@@ -85,7 +85,7 @@ func (ms *MetricsSaver) GetCounter(rw http.ResponseWriter, req *http.Request) {
 	val, err := ms.storage.GetCounter(name)
 	if err != nil {
 		rw.WriteHeader(http.StatusNotFound)
-		fmt.Fprintf(rw, "%v", err.Error())
+		http.Error(rw, err.Error(), http.StatusInternalServerError)
 		return
 	}
 	rw.Header().Set("Content-Type", "application/json")
@@ -97,14 +97,14 @@ func (ms *MetricsSaver) SaveValue(rw http.ResponseWriter, req *http.Request) {
 	respBody, err := ioutil.ReadAll(req.Body)
 	if err != nil {
 		rw.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprintf(rw, "%v", err.Error())
+		http.Error(rw, err.Error(), http.StatusInternalServerError)
 		return
 	}
 	fmt.Println("SaveValue", req.URL.Path, string(respBody))
 	err = json.Unmarshal(respBody, &metrics)
 	if err != nil {
 		rw.WriteHeader(http.StatusBadRequest)
-		fmt.Fprintf(rw, "%v", err.Error())
+		http.Error(rw, err.Error(), http.StatusInternalServerError)
 		return
 	}
 	log.Info().Interface("metrics", metrics).Send()
@@ -112,7 +112,7 @@ func (ms *MetricsSaver) SaveValue(rw http.ResponseWriter, req *http.Request) {
 	case "counter":
 		if metrics.Delta == nil {
 			rw.WriteHeader(http.StatusBadRequest)
-			fmt.Fprintf(rw, "Delta is empty")
+			http.Error(rw, "Delta is empty", http.StatusInternalServerError)
 			return
 		}
 		ms.storage.IncrementCounter(metrics.ID, models.Counter(*metrics.Delta))
@@ -120,7 +120,7 @@ func (ms *MetricsSaver) SaveValue(rw http.ResponseWriter, req *http.Request) {
 	case "gauge":
 		if metrics.Value == nil {
 			rw.WriteHeader(http.StatusBadRequest)
-			fmt.Fprintf(rw, "Value is empty")
+			http.Error(rw, "Value is empty", http.StatusInternalServerError)
 			return
 		}
 		ms.storage.SaveGauge(metrics.ID, models.Gauge(*metrics.Value))
