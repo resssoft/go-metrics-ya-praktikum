@@ -56,6 +56,6 @@ func main() {
 	}()
 }
 
-func Test_main(t *testing.T) {
+func TestMain(t *testing.T) {
 	t.Skip()
 }

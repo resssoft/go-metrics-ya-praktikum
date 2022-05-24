@@ -59,6 +59,6 @@ func main() {
 	log.Fatal(http.ListenAndServe(address, server.Router(storage)))
 }
 
-func Test_main(t *testing.T) {
+func TestMain(t *testing.T) {
 	t.Skip()
 }
