@@ -136,7 +136,7 @@ func (ms *MetricsSaver) GetValue(rw http.ResponseWriter, req *http.Request) {
 	respBody, err := ioutil.ReadAll(req.Body)
 	if err != nil {
 		rw.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprintf(rw, "%v", err.Error())
+		http.Error(rw, err.Error(), http.StatusInternalServerError)
 		return
 	}
 	rw.Header().Set("Content-Type", "application/json")
@@ -144,7 +144,7 @@ func (ms *MetricsSaver) GetValue(rw http.ResponseWriter, req *http.Request) {
 	err = json.Unmarshal(respBody, &metrics)
 	if err != nil {
 		rw.WriteHeader(http.StatusBadRequest)
-		fmt.Fprintf(rw, "%v", err.Error())
+		http.Error(rw, err.Error(), http.StatusInternalServerError)
 		return
 	}
 	switch metrics.MType {
@@ -152,7 +152,7 @@ func (ms *MetricsSaver) GetValue(rw http.ResponseWriter, req *http.Request) {
 		val, err := ms.storage.GetCounter(metrics.ID)
 		if err != nil {
 			rw.WriteHeader(http.StatusNotFound)
-			fmt.Fprintf(rw, "%v", err.Error())
+			http.Error(rw, err.Error(), http.StatusInternalServerError)
 			return
 		}
 		intVal := int64(val)
@@ -160,7 +160,7 @@ func (ms *MetricsSaver) GetValue(rw http.ResponseWriter, req *http.Request) {
 		metricJSON, err := json.Marshal(metrics)
 		if err != nil {
 			rw.WriteHeader(http.StatusForbidden)
-			fmt.Fprintf(rw, "%v", err.Error())
+			http.Error(rw, err.Error(), http.StatusInternalServerError)
 			return
 		}
 		rw.Header().Set("Content-Type", "application/json")
@@ -171,14 +171,14 @@ func (ms *MetricsSaver) GetValue(rw http.ResponseWriter, req *http.Request) {
 		metrics.Value = &floatVal
 		if err != nil {
 			rw.WriteHeader(http.StatusForbidden)
-			fmt.Fprintf(rw, "%v", err.Error())
+			http.Error(rw, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
 		metricJSON, err := json.Marshal(metrics)
 		if err != nil {
 			rw.WriteHeader(http.StatusForbidden)
-			fmt.Fprintf(rw, "%v", err.Error())
+			http.Error(rw, err.Error(), http.StatusInternalServerError)
 			return
 		}
 		rw.Header().Set("Content-Type", "application/json")
