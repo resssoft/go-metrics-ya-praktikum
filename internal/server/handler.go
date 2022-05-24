@@ -166,7 +166,6 @@ func (ms *MetricsSaver) GetValue(rw http.ResponseWriter, req *http.Request) {
 		intVal := int64(val)
 		metrics.Delta = &intVal
 		metricJSON, err := json.Marshal(metrics)
-		rw.Header().Set("Content-Type", "application/json")
 		if err != nil {
 			rw.WriteHeader(http.StatusForbidden)
 			http.Error(rw, err.Error(), http.StatusInternalServerError)
