@@ -23,10 +23,6 @@ const tmpDefault = `
 </table></body></html>
 `
 
-type errResponse struct {
-	Error string
-}
-
 type MetricsSaver struct {
 	storage structure.Storage
 }
@@ -141,69 +137,63 @@ func (ms *MetricsSaver) SaveValue(rw http.ResponseWriter, req *http.Request) {
 }
 
 func (ms *MetricsSaver) GetValue(rw http.ResponseWriter, req *http.Request) {
-	rw.Header().Set("Content-Type", "application/json")
 	metrics := structure.Metrics{}
 	respBody, err := ioutil.ReadAll(req.Body)
 	if err != nil {
-		http.Error(rw, getErr(err.Error()), http.StatusInternalServerError)
+		rw.WriteHeader(http.StatusInternalServerError)
+		http.Error(rw, err.Error(), http.StatusInternalServerError)
 		return
 	}
 	fmt.Println("GetValue", req.URL.Path, string(respBody))
 	err = json.Unmarshal(respBody, &metrics)
 	if err != nil {
+		rw.Header().Set("Content-Type", "text/html; charset=utf-8")
 		rw.WriteHeader(http.StatusBadRequest)
-		rw.Header().Set("X-Content-Type-Options", "nosniff")
-		fmt.Fprintln(rw, getErr(err.Error()))
-		//http.Error(rw, getErr(err.Error()), http.StatusBadRequest)
+		http.Error(rw, err.Error(), http.StatusInternalServerError)
 		return
 	}
 	switch metrics.MType {
 	case "counter":
 		val, err := ms.storage.GetCounter(metrics.ID)
 		if err != nil {
+			rw.Header().Set("Content-Type", "text/html; charset=utf-8")
 			rw.WriteHeader(http.StatusNotFound)
-			rw.Header().Set("X-Content-Type-Options", "nosniff")
-			fmt.Fprintln(rw, getErr(err.Error()))
-			//http.Error(rw, getErr(err.Error()), http.StatusNotFound)
+			http.Error(rw, err.Error(), http.StatusInternalServerError)
 			return
 		}
 		intVal := int64(val)
 		metrics.Delta = &intVal
 		metricJSON, err := json.Marshal(metrics)
 		if err != nil {
+			rw.Header().Set("Content-Type", "text/html; charset=utf-8")
 			rw.WriteHeader(http.StatusForbidden)
-			rw.Header().Set("X-Content-Type-Options", "nosniff")
-			fmt.Fprintln(rw, getErr(err.Error()))
-			//http.Error(rw, getErr(err.Error()), http.StatusForbidden)
+			http.Error(rw, err.Error(), http.StatusInternalServerError)
 			return
 		}
+		rw.Header().Set("Content-Type", "application/json")
 		fmt.Fprintf(rw, "%s", string(metricJSON))
 	case "gauge":
 		val, err := ms.storage.GetGauge(metrics.ID)
 		floatVal := float64(val)
 		metrics.Value = &floatVal
 		if err != nil {
+			rw.Header().Set("Content-Type", "text/html; charset=utf-8")
 			rw.WriteHeader(http.StatusForbidden)
-			rw.Header().Set("X-Content-Type-Options", "nosniff")
-			fmt.Fprintln(rw, getErr(err.Error()))
-			//http.Error(rw, getErr(err.Error()), http.StatusForbidden)
+			http.Error(rw, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
 		metricJSON, err := json.Marshal(metrics)
 		if err != nil {
+			rw.Header().Set("Content-Type", "text/html; charset=utf-8")
 			rw.WriteHeader(http.StatusForbidden)
-			rw.Header().Set("X-Content-Type-Options", "nosniff")
-			fmt.Fprintln(rw, getErr(err.Error()))
-			//http.Error(rw, getErr(err.Error()), http.StatusForbidden)
+			http.Error(rw, err.Error(), http.StatusInternalServerError)
 			return
 		}
+		rw.Header().Set("Content-Type", "application/json")
 		fmt.Fprintf(rw, "%s", string(metricJSON))
 	default:
 		rw.WriteHeader(http.StatusForbidden)
-		rw.Header().Set("X-Content-Type-Options", "nosniff")
-		fmt.Fprintln(rw, getErr("unsupported type"))
-		//http.Error(rw, getErr("unsupported type"), http.StatusForbidden)
 		return
 	}
 }
@@ -252,12 +242,4 @@ func (ms *MetricsSaver) h501(rw http.ResponseWriter, req *http.Request) {
 
 func (ms *MetricsSaver) h404(rw http.ResponseWriter, req *http.Request) {
 	rw.WriteHeader(http.StatusNotFound)
-}
-
-func getErr(msg string) string {
-	errObj := errResponse{
-		Error: msg,
-	}
-	errObjJSON, _ := json.Marshal(errObj)
-	return string(errObjJSON)
 }
