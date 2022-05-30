@@ -63,13 +63,11 @@ func (ms *MetricsSaver) GetGauge(rw http.ResponseWriter, req *http.Request) {
 	fmt.Println(req.URL.Path)
 	name := chi.URLParam(req, "name")
 	if name == "" {
-		rw.Header().Set("Content-Type", "application/json")
 		rw.WriteHeader(http.StatusBadRequest)
 		return
 	}
 	val, err := ms.storage.GetGauge(name)
 	if err != nil {
-		rw.Header().Set("Content-Type", "application/json")
 		rw.WriteHeader(http.StatusNotFound)
 		http.Error(rw, err.Error(), http.StatusInternalServerError)
 		return
@@ -81,13 +79,11 @@ func (ms *MetricsSaver) GetGauge(rw http.ResponseWriter, req *http.Request) {
 func (ms *MetricsSaver) GetCounter(rw http.ResponseWriter, req *http.Request) {
 	name := chi.URLParam(req, "name")
 	if name == "" {
-		rw.Header().Set("Content-Type", "application/json")
 		rw.WriteHeader(http.StatusBadRequest)
 		return
 	}
 	val, err := ms.storage.GetCounter(name)
 	if err != nil {
-		rw.Header().Set("Content-Type", "application/json")
 		rw.WriteHeader(http.StatusNotFound)
 		http.Error(rw, err.Error(), http.StatusInternalServerError)
 		return
@@ -144,7 +140,6 @@ func (ms *MetricsSaver) GetValue(rw http.ResponseWriter, req *http.Request) {
 	metrics := structure.Metrics{}
 	respBody, err := ioutil.ReadAll(req.Body)
 	if err != nil {
-		rw.Header().Set("Content-Type", "application/json")
 		rw.WriteHeader(http.StatusInternalServerError)
 		http.Error(rw, err.Error(), http.StatusInternalServerError)
 		return
@@ -152,7 +147,7 @@ func (ms *MetricsSaver) GetValue(rw http.ResponseWriter, req *http.Request) {
 	fmt.Println("GetValue", req.URL.Path, string(respBody))
 	err = json.Unmarshal(respBody, &metrics)
 	if err != nil {
-		rw.Header().Set("Content-Type", "application/json")
+		rw.Header().Set("Content-Type", "text/html; charset=utf-8")
 		rw.WriteHeader(http.StatusBadRequest)
 		http.Error(rw, err.Error(), http.StatusInternalServerError)
 		return
@@ -161,7 +156,7 @@ func (ms *MetricsSaver) GetValue(rw http.ResponseWriter, req *http.Request) {
 	case "counter":
 		val, err := ms.storage.GetCounter(metrics.ID)
 		if err != nil {
-			rw.Header().Set("Content-Type", "application/json")
+			rw.Header().Set("Content-Type", "text/html; charset=utf-8")
 			rw.WriteHeader(http.StatusNotFound)
 			http.Error(rw, err.Error(), http.StatusInternalServerError)
 			return
@@ -170,7 +165,7 @@ func (ms *MetricsSaver) GetValue(rw http.ResponseWriter, req *http.Request) {
 		metrics.Delta = &intVal
 		metricJSON, err := json.Marshal(metrics)
 		if err != nil {
-			rw.Header().Set("Content-Type", "application/json")
+			rw.Header().Set("Content-Type", "text/html; charset=utf-8")
 			rw.WriteHeader(http.StatusForbidden)
 			http.Error(rw, err.Error(), http.StatusInternalServerError)
 			return
@@ -182,7 +177,7 @@ func (ms *MetricsSaver) GetValue(rw http.ResponseWriter, req *http.Request) {
 		floatVal := float64(val)
 		metrics.Value = &floatVal
 		if err != nil {
-			rw.Header().Set("Content-Type", "application/json")
+			rw.Header().Set("Content-Type", "text/html; charset=utf-8")
 			rw.WriteHeader(http.StatusForbidden)
 			http.Error(rw, err.Error(), http.StatusInternalServerError)
 			return
@@ -190,7 +185,7 @@ func (ms *MetricsSaver) GetValue(rw http.ResponseWriter, req *http.Request) {
 
 		metricJSON, err := json.Marshal(metrics)
 		if err != nil {
-			rw.Header().Set("Content-Type", "application/json")
+			rw.Header().Set("Content-Type", "text/html; charset=utf-8")
 			rw.WriteHeader(http.StatusForbidden)
 			http.Error(rw, err.Error(), http.StatusInternalServerError)
 			return
@@ -198,7 +193,6 @@ func (ms *MetricsSaver) GetValue(rw http.ResponseWriter, req *http.Request) {
 		rw.Header().Set("Content-Type", "application/json")
 		fmt.Fprintf(rw, "%s", string(metricJSON))
 	default:
-		rw.Header().Set("Content-Type", "application/json")
 		rw.WriteHeader(http.StatusForbidden)
 		return
 	}
@@ -243,11 +237,9 @@ func (ms *MetricsSaver) GetAll(rw http.ResponseWriter, req *http.Request) {
 }
 
 func (ms *MetricsSaver) h501(rw http.ResponseWriter, req *http.Request) {
-	rw.Header().Set("Content-Type", "application/json")
 	rw.WriteHeader(http.StatusNotImplemented)
 }
 
 func (ms *MetricsSaver) h404(rw http.ResponseWriter, req *http.Request) {
-	rw.Header().Set("Content-Type", "application/json")
 	rw.WriteHeader(http.StatusNotFound)
 }
