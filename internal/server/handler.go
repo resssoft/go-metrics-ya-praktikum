@@ -258,6 +258,6 @@ func getErr(msg string) string {
 	errObj := errResponse{
 		Error: msg,
 	}
-	errObjJson, _ := json.Marshal(errObj)
-	return string(errObjJson)
+	errObjJSON, _ := json.Marshal(errObj)
+	return string(errObjJSON)
 }
