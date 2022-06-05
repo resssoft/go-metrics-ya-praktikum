@@ -61,41 +61,52 @@ func (r *Reporter) report(ctx context.Context) {
 					fmt.Println(err)
 					return
 				}
-				response, err := http.Post(fmt.Sprintf(
-					reportURL,
-					apiAddress), "application/json", bytes.NewBuffer(metricJSON))
+				err = r.send(metricJSON)
 				if err != nil {
 					fmt.Println(err)
 					return
 				}
-				_, err = ioutil.ReadAll(response.Body)
-				if err != nil {
-					return
-				}
-				response.Body.Close()
 			}
 
 			for name, value := range r.storage.GetCounters() {
-				response, err := http.Post(fmt.Sprintf(
-					reportURL,
-					apiAddress,
-					"counter",
-					name,
-					value), "text/plain", nil)
+				deltaValue := int64(value)
+				metric := structure.Metrics{
+					ID:    name,
+					MType: "counter",
+					Delta: &deltaValue,
+				}
+				metricJSON, err := json.Marshal(metric)
 				if err != nil {
 					fmt.Println(err)
 					return
 				}
-				fmt.Println("report data", name, value) //TODO: remove after check
-				_, err = ioutil.ReadAll(response.Body)
+				err = r.send(metricJSON)
 				if err != nil {
+					fmt.Println(err)
 					return
 				}
-				response.Body.Close()
 			}
 		case <-ctx.Done():
 			fmt.Println("break report")
 			return
 		}
 	}
+}
+
+func (r *Reporter) send(data []byte) error {
+	response, err := http.Post(fmt.Sprintf(
+		reportURL,
+		apiAddress), "application/json", bytes.NewBuffer(data))
+	if err != nil {
+		return err
+	}
+	_, err = ioutil.ReadAll(response.Body)
+	if err != nil {
+		return err
+	}
+	err = response.Body.Close()
+	if err != nil {
+		return err
+	}
+	return nil
 }
