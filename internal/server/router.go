@@ -16,11 +16,11 @@ type gzipWriter struct {
 	Writer io.Writer
 }
 
-func Router(storage structure.Storage) chi.Router {
+func Router(storage structure.Storage, cryptoKey string) chi.Router {
 	router := chi.NewRouter()
 	router.Use(middleware.Recoverer)
 	router.Use(gzipHandle)
-	handler := NewMetricsSaver(storage)
+	handler := NewMetricsSaver(storage, cryptoKey)
 	router.Route("/", func(r chi.Router) {
 		r.Get("/", handler.GetAll)
 		r.Route("/update", func(r chi.Router) {

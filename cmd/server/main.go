@@ -21,19 +21,22 @@ func main() {
 	addressFlag := flag.String("a", ":8080", "server address")
 	storePathFlag := flag.String("f", "/tmp/devops-metrics-db.json", "server store file path")
 	storeIntervalFlag := flag.Duration("i", time.Second*300, "server store interval")
+	cryptoKeyFlag := flag.String("k", "", "crypto key")
 	flag.Parse()
 
 	address := params.StrByEnv(*addressFlag, "ADDRESS")
 	storeInterval := params.DurationByEnv(*storeIntervalFlag, "STORE_INTERVAL")
 	storePath := params.StrByEnv(*storePathFlag, "STORE_FILE")
 	restore := params.BoolByEnv(*restoreFlag, "RESTORE")
+	cryptoKey := params.StrByEnv(*cryptoKeyFlag, "KEY")
 
 	fmt.Printf(
-		"Start server by address: %s store duration: %v restore flag: %v and store file: %s \n",
+		"Start server by address: %s store duration: %v restore flag: %v and store file: %s key [%s]\n",
 		address,
 		storeInterval,
 		restore,
-		storePath)
+		storePath,
+		cryptoKey)
 	storage := ramstorage.New()
 	writerService := writer.New(storeInterval, storePath, restore, storage)
 	cansel := writerService.Start()
@@ -56,7 +59,7 @@ func main() {
 		}
 	}()
 
-	log.Fatal(http.ListenAndServe(address, server.Router(storage)))
+	log.Fatal(http.ListenAndServe(address, server.Router(storage, cryptoKey)))
 }
 
 func TestMain(t *testing.T) {

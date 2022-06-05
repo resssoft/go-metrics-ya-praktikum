@@ -95,9 +95,9 @@ func (r *Reporter) send(metric structure.Metrics) error {
 		var hashBody []byte
 		switch metric.MType {
 		case "counter":
-			hashBody = []byte(fmt.Sprintf("%s:counter:%d", metric.ID, metric.Delta))
+			hashBody = []byte(fmt.Sprintf("%s:counter:%d", metric.ID, *metric.Delta))
 		case "gauge":
-			hashBody = []byte(fmt.Sprintf("%s:gauge:%d", metric.ID, metric.Value))
+			hashBody = []byte(fmt.Sprintf("%s:gauge:%f", metric.ID, *metric.Value))
 		}
 		h := hmac.New(sha256.New, []byte(r.cryptoKey))
 		h.Write(hashBody)

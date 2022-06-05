@@ -27,10 +27,11 @@ func main() {
 	cryptoKey := params.StrByEnv(*cryptoKeyFlag, "KEY")
 
 	fmt.Printf(
-		"Start agent with intervals for poll: %v, for report: %v and api address: %s \n",
+		"Start agent with intervals for poll: %v, for report: %v and api address: %s Key [%s]\n",
 		pollInterval,
 		reportInterval,
-		address)
+		address,
+		cryptoKey)
 	storage := ramstorage.New()
 	pollerService := poller.New(pollInterval, storage)
 	reporterService := reporter.New(reportInterval, address, storage, cryptoKey)

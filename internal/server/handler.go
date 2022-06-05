@@ -2,6 +2,9 @@ package server
 
 import (
 	"bytes"
+	"crypto/hmac"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"github.com/go-chi/chi/v5"
@@ -28,12 +31,14 @@ type errResponse struct {
 }
 
 type MetricsSaver struct {
-	storage structure.Storage
+	storage   structure.Storage
+	cryptoKey string
 }
 
-func NewMetricsSaver(storage structure.Storage) MetricsSaver {
+func NewMetricsSaver(storage structure.Storage, cryptoKey string) MetricsSaver {
 	return MetricsSaver{
-		storage: storage,
+		storage:   storage,
+		cryptoKey: cryptoKey,
 	}
 }
 
@@ -114,6 +119,29 @@ func (ms *MetricsSaver) SaveValue(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 	log.Info().Interface("metrics", metrics).Send()
+	if metrics.Hash != "" && ms.cryptoKey != "" {
+		var hashBody []byte
+		switch metrics.MType {
+		case "counter":
+			hashBody = []byte(fmt.Sprintf("%s:counter:%d", metrics.ID, *metrics.Delta))
+		case "gauge":
+			hashBody = []byte(fmt.Sprintf("%s:gauge:%f", metrics.ID, *metrics.Value))
+		}
+		h := hmac.New(sha256.New, []byte(ms.cryptoKey))
+		h.Write(hashBody)
+		sha := h.Sum(nil)
+		decodedHex, err := hex.DecodeString(metrics.Hash)
+		if err != nil {
+			rw.Header().Set("Content-Type", "text/html; charset=utf-8")
+			http.Error(rw, "Hash can`t be decoded", http.StatusBadRequest)
+			return
+		}
+		if !hmac.Equal(sha, decodedHex) {
+			rw.Header().Set("Content-Type", "text/html; charset=utf-8")
+			http.Error(rw, "Hash sum is not true", http.StatusBadRequest)
+			return
+		}
+	}
 	switch metrics.MType {
 	case "counter":
 		if metrics.Delta == nil {
