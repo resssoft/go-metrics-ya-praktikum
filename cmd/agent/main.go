@@ -18,11 +18,13 @@ func main() {
 	addressFlag := flag.String("a", "127.0.0.1:8080", "server address")
 	reportIntervalIntervalFlag := flag.Duration("r", time.Second*5, "agent report interval")
 	pollIntervalIntervalFlag := flag.Duration("p", time.Second*2, "agent poll interval")
+	cryptoKeyFlag := flag.String("k", "", "crypto key")
 	flag.Parse()
 
 	reportInterval := params.DurationByEnv(*reportIntervalIntervalFlag, "REPORT_INTERVAL")
 	pollInterval := params.DurationByEnv(*pollIntervalIntervalFlag, "POLL_INTERVAL")
 	address := params.StrByEnv(*addressFlag, "ADDRESS")
+	cryptoKey := params.StrByEnv(*cryptoKeyFlag, "KEY")
 
 	fmt.Printf(
 		"Start agent with intervals for poll: %v, for report: %v and api address: %s \n",
@@ -31,7 +33,7 @@ func main() {
 		address)
 	storage := ramstorage.New()
 	pollerService := poller.New(pollInterval, storage)
-	reporterService := reporter.New(reportInterval, address, storage)
+	reporterService := reporter.New(reportInterval, address, storage, cryptoKey)
 
 	cancelPoller := pollerService.Start()
 	cancelReporter := reporterService.Start()

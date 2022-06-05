@@ -3,12 +3,16 @@ package reporter
 import (
 	"bytes"
 	"context"
+	"crypto/hmac"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"github.com/resssoft/go-metrics-ya-praktikum/internal/structure"
 	"io/ioutil"
 	"net/http"
 	"time"
+
+	"crypto/sha256"
 )
 
 var (
@@ -17,19 +21,22 @@ var (
 )
 
 type Reporter struct {
-	Duration time.Duration
-	ticker   *time.Ticker
-	storage  structure.Storage
+	Duration  time.Duration
+	ticker    *time.Ticker
+	storage   structure.Storage
+	cryptoKey string
 }
 
 func New(
 	duration time.Duration,
 	address string,
-	storage structure.Storage) structure.Task {
+	storage structure.Storage,
+	cryptoKey string) structure.Task {
 	apiAddress = address
 	return &Reporter{
-		Duration: duration,
-		storage:  storage,
+		Duration:  duration,
+		storage:   storage,
+		cryptoKey: cryptoKey,
 	}
 }
 
@@ -56,12 +63,7 @@ func (r *Reporter) report(ctx context.Context) {
 					MType: "gauge",
 					Value: &gaugeValue,
 				}
-				metricJSON, err := json.Marshal(metric)
-				if err != nil {
-					fmt.Println(err)
-					return
-				}
-				err = r.send(metricJSON)
+				err := r.send(metric)
 				if err != nil {
 					fmt.Println(err)
 					return
@@ -75,12 +77,7 @@ func (r *Reporter) report(ctx context.Context) {
 					MType: "counter",
 					Delta: &deltaValue,
 				}
-				metricJSON, err := json.Marshal(metric)
-				if err != nil {
-					fmt.Println(err)
-					return
-				}
-				err = r.send(metricJSON)
+				err := r.send(metric)
 				if err != nil {
 					fmt.Println(err)
 					return
@@ -93,10 +90,28 @@ func (r *Reporter) report(ctx context.Context) {
 	}
 }
 
-func (r *Reporter) send(data []byte) error {
+func (r *Reporter) send(metric structure.Metrics) error {
+	if r.cryptoKey != "" {
+		var hashBody []byte
+		switch metric.MType {
+		case "counter":
+			hashBody = []byte(fmt.Sprintf("%s:counter:%d", metric.ID, metric.Delta))
+		case "gauge":
+			hashBody = []byte(fmt.Sprintf("%s:gauge:%d", metric.ID, metric.Value))
+		}
+		h := hmac.New(sha256.New, []byte(r.cryptoKey))
+		h.Write(hashBody)
+		sha := hex.EncodeToString(h.Sum(nil))
+		metric.Hash = sha
+	}
+	metricJSON, err := json.Marshal(metric)
+	if err != nil {
+		return err
+	}
+	fmt.Println(string(metricJSON))
 	response, err := http.Post(fmt.Sprintf(
 		reportURL,
-		apiAddress), "application/json", bytes.NewBuffer(data))
+		apiAddress), "application/json", bytes.NewBuffer(metricJSON))
 	if err != nil {
 		return err
 	}
