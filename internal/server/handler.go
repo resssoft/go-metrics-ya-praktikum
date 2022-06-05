@@ -33,12 +33,14 @@ type errResponse struct {
 type MetricsSaver struct {
 	storage   structure.Storage
 	cryptoKey string
+	dbAddress string
 }
 
-func NewMetricsSaver(storage structure.Storage, cryptoKey string) MetricsSaver {
+func NewMetricsSaver(storage structure.Storage, cryptoKey, dbAddress string) MetricsSaver {
 	return MetricsSaver{
 		storage:   storage,
 		cryptoKey: cryptoKey,
+		dbAddress: dbAddress,
 	}
 }
 
@@ -295,6 +297,15 @@ func (ms *MetricsSaver) GetAll(rw http.ResponseWriter, req *http.Request) {
 	}
 	rw.Header().Set("Content-Type", "text/html; charset=utf-8")
 	fmt.Fprintf(rw, "%v", tpl.String())
+}
+
+func (ms *MetricsSaver) DbPing(rw http.ResponseWriter, req *http.Request) {
+	result := ms.storage.Ping()
+	if result == "" {
+		rw.WriteHeader(http.StatusOK)
+	} else {
+		http.Error(rw, result, http.StatusInternalServerError)
+	}
 }
 
 func (ms *MetricsSaver) h501(rw http.ResponseWriter, req *http.Request) {

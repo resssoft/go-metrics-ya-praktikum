@@ -18,6 +18,7 @@ type Storage interface {
 	IncrementCounter(string, models.Counter)
 	GetCounter(string) (models.Counter, error)
 	GetGauge(string) (models.Gauge, error)
+	Ping() string
 }
 
 type Metrics struct {

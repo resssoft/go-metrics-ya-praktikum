@@ -16,11 +16,11 @@ type gzipWriter struct {
 	Writer io.Writer
 }
 
-func Router(storage structure.Storage, cryptoKey string) chi.Router {
+func Router(storage structure.Storage, cryptoKey, dbAddress string) chi.Router {
 	router := chi.NewRouter()
 	router.Use(middleware.Recoverer)
 	router.Use(gzipHandle)
-	handler := NewMetricsSaver(storage, cryptoKey)
+	handler := NewMetricsSaver(storage, cryptoKey, dbAddress)
 	router.Route("/", func(r chi.Router) {
 		r.Get("/", handler.GetAll)
 		r.Route("/update", func(r chi.Router) {
@@ -42,6 +42,10 @@ func Router(storage structure.Storage, cryptoKey string) chi.Router {
 			r.Post("/*", handler.h501) // it is wrong, i think, but autotests think otherwise
 		})
 	})
+	router.Route("/ping", func(r chi.Router) {
+		r.Get("/", handler.DbPing)
+	})
+
 	return router
 }
 

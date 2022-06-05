@@ -89,3 +89,7 @@ func (s *simpleRAMStorage) GetGauge(key string) (models.Gauge, error) {
 	s.storage.Unlock()
 	return value, err
 }
+
+func (s *simpleRAMStorage) Ping() string {
+	return "ram"
+}
