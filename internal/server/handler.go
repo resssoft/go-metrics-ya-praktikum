@@ -120,16 +120,7 @@ func (ms *MetricsSaver) SaveValue(rw http.ResponseWriter, req *http.Request) {
 	}
 	log.Info().Interface("metrics", metrics).Send()
 	if metrics.Hash != "" && ms.cryptoKey != "" {
-		var hashBody []byte
-		switch metrics.MType {
-		case "counter":
-			hashBody = []byte(fmt.Sprintf("%s:counter:%d", metrics.ID, *metrics.Delta))
-		case "gauge":
-			hashBody = []byte(fmt.Sprintf("%s:gauge:%f", metrics.ID, *metrics.Value))
-		}
-		h := hmac.New(sha256.New, []byte(ms.cryptoKey))
-		h.Write(hashBody)
-		sha := h.Sum(nil)
+		sha := ms.getMetricsHash(metrics)
 		decodedHex, err := hex.DecodeString(metrics.Hash)
 		if err != nil {
 			rw.Header().Set("Content-Type", "text/html; charset=utf-8")
@@ -197,6 +188,9 @@ func (ms *MetricsSaver) GetValue(rw http.ResponseWriter, req *http.Request) {
 		}
 		intVal := int64(val)
 		metrics.Delta = &intVal
+		if ms.cryptoKey != "" {
+			metrics.Hash = hex.EncodeToString(ms.getMetricsHash(metrics))
+		}
 		metricJSON, err := json.Marshal(metrics)
 		if err != nil {
 			rw.WriteHeader(http.StatusForbidden)
@@ -217,7 +211,9 @@ func (ms *MetricsSaver) GetValue(rw http.ResponseWriter, req *http.Request) {
 			//http.Error(rw, getErr(err.Error()), http.StatusForbidden)
 			return
 		}
-
+		if ms.cryptoKey != "" {
+			metrics.Hash = hex.EncodeToString(ms.getMetricsHash(metrics))
+		}
 		metricJSON, err := json.Marshal(metrics)
 		if err != nil {
 			rw.WriteHeader(http.StatusForbidden)
@@ -234,6 +230,33 @@ func (ms *MetricsSaver) GetValue(rw http.ResponseWriter, req *http.Request) {
 		//http.Error(rw, getErr("unsupported type"), http.StatusForbidden)
 		return
 	}
+}
+
+func (ms *MetricsSaver) getMetricsHash(metrics structure.Metrics) []byte {
+	var hashBody []byte
+	switch metrics.MType {
+	case "counter":
+		hashBody = []byte(fmt.Sprintf("%s:counter:%d", metrics.ID, getSafelyDelta(metrics.Delta)))
+	case "gauge":
+		hashBody = []byte(fmt.Sprintf("%s:gauge:%f", metrics.ID, getSafelyValue(metrics.Value)))
+	}
+	h := hmac.New(sha256.New, []byte(ms.cryptoKey))
+	h.Write(hashBody)
+	return h.Sum(nil)
+}
+
+func getSafelyDelta(link *int64) int64 {
+	if link == nil {
+		return 0
+	}
+	return *link
+}
+
+func getSafelyValue(link *float64) float64 {
+	if link == nil {
+		return 0.0
+	}
+	return *link
 }
 
 type tmpValue struct {
