@@ -22,7 +22,7 @@ func (s *mockStorage) GetGauge(string) (models.Gauge, error)           { return 
 
 func TestRouter(t *testing.T) {
 	storage := mockStorage{}
-	r := Router(&storage)
+	r := Router(&storage, "")
 	ts := httptest.NewServer(r)
 	defer ts.Close()
 
