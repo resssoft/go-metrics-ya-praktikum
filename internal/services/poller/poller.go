@@ -2,9 +2,9 @@ package poller
 
 import (
 	"context"
-	"fmt"
 	"github.com/resssoft/go-metrics-ya-praktikum/internal/models"
 	"github.com/resssoft/go-metrics-ya-praktikum/internal/structure"
+	"github.com/rs/zerolog/log"
 	"math/rand"
 	"runtime"
 	"time"
@@ -38,7 +38,7 @@ func (p *Poller) Stop(cancel context.CancelFunc) {
 }
 
 func (p *Poller) poll(ctx context.Context) {
-	fmt.Println("run poll event spy")
+	log.Info().Msg("run poll event spy")
 	var m runtime.MemStats
 	s1 := rand.NewSource(time.Now().UnixNano())
 	r1 := rand.New(s1)
@@ -79,10 +79,10 @@ func (p *Poller) poll(ctx context.Context) {
 			p.storage.SaveCounter("PollCount", models.Counter(p.iterator))
 			p.storage.SaveCounter("RandomValue", models.Counter(r1.Int()))
 
-			fmt.Println("poll iterator", p.iterator)
+			log.Debug().Msg("poll iterator")
 
 		case <-ctx.Done():
-			fmt.Println("break poll")
+			log.Info().Msg("break poll")
 			return
 		}
 	}

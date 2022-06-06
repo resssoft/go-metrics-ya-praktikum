@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/resssoft/go-metrics-ya-praktikum/internal/structure"
+	"github.com/rs/zerolog/log"
 	"io/ioutil"
 	"net/http"
 	"time"
@@ -52,7 +53,7 @@ func (r *Reporter) Stop(cancel context.CancelFunc) {
 }
 
 func (r *Reporter) report(ctx context.Context) {
-	fmt.Println("run report event spy")
+	log.Debug().Msg("run report event spy")
 	for {
 		select {
 		case <-r.ticker.C:
@@ -65,7 +66,7 @@ func (r *Reporter) report(ctx context.Context) {
 				}
 				err := r.send(metric)
 				if err != nil {
-					fmt.Println(err)
+					log.Info().AnErr("send gauge metric error", err).Send()
 					return
 				}
 			}
@@ -79,12 +80,12 @@ func (r *Reporter) report(ctx context.Context) {
 				}
 				err := r.send(metric)
 				if err != nil {
-					fmt.Println(err)
+					log.Info().AnErr("send counter metric error", err).Send()
 					return
 				}
 			}
 		case <-ctx.Done():
-			fmt.Println("break report")
+			log.Info().Msg("break report")
 			return
 		}
 	}
@@ -108,7 +109,6 @@ func (r *Reporter) send(metric structure.Metrics) error {
 	if err != nil {
 		return err
 	}
-	fmt.Println(string(metricJSON))
 	response, err := http.Post(fmt.Sprintf(
 		reportURL,
 		apiAddress), "application/json", bytes.NewBuffer(metricJSON))

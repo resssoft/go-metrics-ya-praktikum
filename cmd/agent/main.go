@@ -2,11 +2,12 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"github.com/resssoft/go-metrics-ya-praktikum/internal/services/poller"
 	"github.com/resssoft/go-metrics-ya-praktikum/internal/services/reporter"
 	ramstorage "github.com/resssoft/go-metrics-ya-praktikum/internal/storages/ram"
 	"github.com/resssoft/go-metrics-ya-praktikum/pkg/params"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 	"os"
 	"os/signal"
 	"syscall"
@@ -15,6 +16,7 @@ import (
 )
 
 func main() {
+	zerolog.SetGlobalLevel(zerolog.InfoLevel) // DebugLevel | InfoLevel
 	addressFlag := flag.String("a", "127.0.0.1:8080", "server address")
 	reportIntervalIntervalFlag := flag.Duration("r", time.Second*5, "agent report interval")
 	pollIntervalIntervalFlag := flag.Duration("p", time.Second*2, "agent poll interval")
@@ -26,7 +28,7 @@ func main() {
 	address := params.StrByEnv(*addressFlag, "ADDRESS")
 	cryptoKey := params.StrByEnv(*cryptoKeyFlag, "KEY")
 
-	fmt.Printf(
+	log.Info().Msgf(
 		"Start agent with intervals for poll: %v, for report: %v and api address: %s Key [%s]\n",
 		pollInterval,
 		reportInterval,
@@ -49,12 +51,12 @@ func main() {
 		s := <-signalChanel
 		switch s {
 		case syscall.SIGQUIT, syscall.SIGINT, syscall.SIGTERM:
-			fmt.Println("Signal quit triggered.")
+			log.Info().Msg("Signal quit triggered.")
 			pollerService.Stop(cancelPoller)
 			reporterService.Stop(cancelReporter)
 			os.Exit(0)
 		default:
-			fmt.Println("Unknown signal.")
+			log.Info().Msg("Unknown signal.")
 		}
 	}()
 }
