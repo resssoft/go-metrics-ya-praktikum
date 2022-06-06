@@ -19,10 +19,11 @@ func (s *mockStorage) GetCounters() map[string]models.Counter          { return 
 func (s *mockStorage) IncrementCounter(key string, val models.Counter) {}
 func (s *mockStorage) GetCounter(string) (models.Counter, error)       { return models.Counter(0), nil }
 func (s *mockStorage) GetGauge(string) (models.Gauge, error)           { return models.Gauge(0), nil }
+func (s *mockStorage) Ping() string                                    { return "" }
 
 func TestRouter(t *testing.T) {
 	storage := mockStorage{}
-	r := Router(&storage, "")
+	r := Router(&storage, "", "")
 	ts := httptest.NewServer(r)
 	defer ts.Close()
 
