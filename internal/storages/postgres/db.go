@@ -6,6 +6,7 @@ import (
 	_ "github.com/lib/pq"
 	"github.com/resssoft/go-metrics-ya-praktikum/internal/models"
 	"github.com/resssoft/go-metrics-ya-praktikum/internal/structure"
+	"github.com/rs/zerolog/log"
 )
 
 type DbData struct {
@@ -18,7 +19,7 @@ func New(address string) (structure.Storage, error) {
 	CheckError(err)
 	err = db.Ping()
 	CheckError(err)
-	fmt.Println("Connected!")
+	log.Info().Msg("db Connected!")
 	dbData := &DbData{
 		storage: db,
 	}
@@ -29,7 +30,7 @@ func New(address string) (structure.Storage, error) {
 func (s *DbData) Close() {
 	err := s.storage.Close()
 	if err != nil {
-		fmt.Println(err.Error())
+		log.Info().Err(err).Msg("Close db error")
 	}
 }
 
@@ -47,10 +48,10 @@ func (s *DbData) Init() {
 	query := "create table IF NOT EXISTS ypt (id VARCHAR not null,mtype VARCHAR not null,delta bigint,value double precision);create unique index IF NOT EXISTS ypt_id_uindex on ypt (id);DO $$ BEGIN IF NOT EXISTS (SELECT FROM ypt limit 1) THEN alter table ypt add constraint ypt_pk primary key (id); END IF; END $$;"
 	_, err := s.Db().Query(query)
 	if err != nil {
-		fmt.Println(err.Error())
+		log.Info().Err(err).Msg("Init db error")
 		return
 	}
-	fmt.Println("db init done")
+	log.Info().Msg("db init done")
 }
 
 func (s *DbData) Ping() string {
@@ -62,8 +63,10 @@ func (s *DbData) Ping() string {
 }
 
 func (s *DbData) SaveGauge(key string, val models.Gauge) {
-	_, err := s.getByName(key)
-	if err != nil {
+	log.Info().Msg("SaveGauge")
+	metric, err := s.getByName(key)
+	if err != nil || metric.ID == "" {
+		log.Info().AnErr("SaveGauge db error", err).Msg("SaveGauge db error")
 		s.save(key, "gauge", models.Counter(0), val)
 	} else {
 		s.update(key, "gauge", models.Counter(0), val)
@@ -71,8 +74,10 @@ func (s *DbData) SaveGauge(key string, val models.Gauge) {
 }
 
 func (s *DbData) SaveCounter(key string, val models.Counter) {
+	log.Info().Msg("SaveCounter")
 	_, err := s.getByName(key)
 	if err != nil {
+		log.Info().AnErr("SaveGauge db error", err).Msg("SaveGauge db error")
 		s.save(key, "counter", val, models.Gauge(0))
 	} else {
 		s.update(key, "counter", val, models.Gauge(0))
@@ -83,7 +88,7 @@ func (s *DbData) GetGauges() map[string]models.Gauge {
 	result := make(map[string]models.Gauge)
 	items, _ := s.getByType("gauge")
 	for _, item := range items {
-		result[item.ID] = models.Gauge(*item.Value)
+		result[item.ID] = models.Gauge(getDbSafelyValue(item.Value))
 	}
 	return result
 }
@@ -92,7 +97,7 @@ func (s *DbData) GetCounters() map[string]models.Counter {
 	result := make(map[string]models.Counter)
 	items, _ := s.getByType("counter")
 	for _, item := range items {
-		result[item.ID] = models.Counter(*item.Delta)
+		result[item.ID] = models.Counter(getDbSafelyDelta(item.Delta))
 	}
 	return result
 }
@@ -100,7 +105,7 @@ func (s *DbData) GetCounters() map[string]models.Counter {
 func (s *DbData) IncrementCounter(key string, val models.Counter) {
 	metric, err := s.getByName(key)
 	if err == nil {
-		s.update(key, "counter", val+models.Counter(*metric.Delta), models.Gauge(0))
+		s.update(key, "counter", val+models.Counter(getDbSafelyDelta(metric.Delta)), models.Gauge(0))
 	}
 }
 
@@ -108,7 +113,7 @@ func (s *DbData) GetCounter(key string) (models.Counter, error) {
 	metric, err := s.getByName(key)
 	var value models.Counter
 	if err == nil {
-		value = models.Counter(*metric.Delta)
+		value = models.Counter(getDbSafelyDelta(metric.Delta))
 	}
 	return value, err
 }
@@ -117,14 +122,16 @@ func (s *DbData) GetGauge(key string) (models.Gauge, error) {
 	metric, err := s.getByName(key)
 	var value models.Gauge
 	if err == nil {
-		value = models.Gauge(*metric.Value)
+		value = models.Gauge(getDbSafelyValue(metric.Value))
 	}
 	return value, err
 }
 
 func (s *DbData) getByName(name string) (structure.Metrics, error) {
 	result := structure.Metrics{}
-	rows, err := s.Db().Query(fmt.Sprintf(`SELECT * FROM "ypt" where id ="%s"`, name))
+	query := fmt.Sprintf(`SELECT * FROM ypt where id='%s'`, name)
+	log.Info().Msg("getByName query: " + query)
+	rows, err := s.Db().Query(query)
 	if err != nil {
 		return result, err
 	}
@@ -150,7 +157,9 @@ func (s *DbData) getByName(name string) (structure.Metrics, error) {
 
 func (s *DbData) getByType(mtype string) ([]structure.Metrics, error) {
 	var result []structure.Metrics
-	rows, err := s.Db().Query(fmt.Sprintf(`SELECT * FROM "ypt" where mtype ="%s"`, mtype))
+	query := fmt.Sprintf(`SELECT * FROM ypt where mtype ='%s'`, mtype)
+	log.Info().Msg("getByType query: " + query)
+	rows, err := s.Db().Query(query)
 	if err != nil {
 		return result, err
 	}
@@ -175,17 +184,34 @@ func (s *DbData) getByType(mtype string) ([]structure.Metrics, error) {
 }
 
 func (s *DbData) save(id, mtype string, delta models.Counter, value models.Gauge) {
-	query := `insert into "ypt" ("id", "mtype", "delta", "value") values('%s', '%s', %s, %s)`
-	_, err := s.Db().Exec(fmt.Sprintf(query, id, mtype, delta, value))
+	queryTmp := `insert into "ypt" ("id", "mtype", "delta", "value") values('%s', '%s', %v, %v)`
+	query := fmt.Sprintf(queryTmp, id, mtype, delta, value)
+	log.Info().Msg("save query: " + query)
+	_, err := s.Db().Exec(query)
 	if err != nil {
-		fmt.Println(err.Error())
+		log.Info().Err(err).Msg("save item error")
 	}
 }
 
 func (s *DbData) update(id, mtype string, delta models.Counter, value models.Gauge) {
 	query := `update "ypt" set "id"=$1, "mtype"=$2, "delta"=$3, "value"=$4 where "id"=$5`
+	log.Info().Msg("update query: " + query)
 	_, err := s.Db().Exec(query, id, mtype, delta, value, id)
 	if err != nil {
-		fmt.Println(err.Error())
+		log.Info().Err(err).Msg("update item error")
 	}
+}
+
+func getDbSafelyDelta(link *int64) int64 {
+	if link == nil {
+		return 0
+	}
+	return *link
+}
+
+func getDbSafelyValue(link *float64) float64 {
+	if link == nil {
+		return 0.0
+	}
+	return *link
 }

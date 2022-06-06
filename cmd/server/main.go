@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"github.com/resssoft/go-metrics-ya-praktikum/internal/server"
@@ -32,7 +33,7 @@ func main() {
 	restore := params.BoolByEnv(*restoreFlag, "RESTORE")
 	cryptoKey := params.StrByEnv(*cryptoKeyFlag, "KEY")
 	dbAddress := params.StrByEnv(*dbAddressFlag, "DATABASE_DSN")
-
+	var writerServiceCenselFunc context.CancelFunc
 	fmt.Printf(
 		"Start server by address: %s store duration: %v restore flag: %v and store file: %s key [%s]\n",
 		address,
@@ -41,15 +42,18 @@ func main() {
 		storePath,
 		cryptoKey)
 	storage := ramstorage.New()
+	writerService := writer.New(storeInterval, storePath, restore, storage)
 	if dbAddress != "" {
+		fmt.Println("used sql db")
 		var err error
 		storage, err = postgres.New(dbAddress)
 		if err != nil {
 			fmt.Println(err.Error())
 		}
+	} else {
+		fmt.Println("used ram db")
+		writerServiceCenselFunc = writerService.Start()
 	}
-	writerService := writer.New(storeInterval, storePath, restore, storage)
-	cansel := writerService.Start()
 
 	signalChanel := make(chan os.Signal, 1)
 	signal.Notify(signalChanel,
@@ -62,7 +66,9 @@ func main() {
 		switch s {
 		case syscall.SIGQUIT, syscall.SIGINT, syscall.SIGTERM:
 			fmt.Println("Signal quit triggered.")
-			writerService.Stop(cansel)
+			if dbAddress == "" {
+				writerService.Stop(writerServiceCenselFunc)
+			}
 			os.Exit(0)
 		default:
 			fmt.Println("Unknown signal.")
