@@ -16,13 +16,19 @@ func New(address string) (structure.Storage, error) {
 	//host=%s port=%d user=%s password=%s dbname=%s sslmode=disable
 	db, err := sql.Open("postgres", address)
 	CheckError(err)
-	defer db.Close()
 	err = db.Ping()
 	CheckError(err)
 	fmt.Println("Connected!")
 	return &DbData{
 		storage: db,
 	}, err
+}
+
+func (s *DbData) Close() {
+	err := s.storage.Close()
+	if err != nil {
+		fmt.Println(err.Error())
+	}
 }
 
 func CheckError(err error) {
