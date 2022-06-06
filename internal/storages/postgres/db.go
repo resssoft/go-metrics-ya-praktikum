@@ -63,10 +63,9 @@ func (s *DbData) Ping() string {
 }
 
 func (s *DbData) SaveGauge(key string, val models.Gauge) {
-	log.Info().Msg("SaveGauge")
 	metric, err := s.getByName(key)
 	if err != nil || metric.ID == "" {
-		log.Info().AnErr("SaveGauge db error", err).Msg("SaveGauge db error")
+		log.Debug().AnErr("SaveGauge db error", err).Msg("SaveGauge db error")
 		s.save(key, "gauge", models.Counter(0), val)
 	} else {
 		s.update(key, "gauge", models.Counter(0), val)
@@ -74,10 +73,9 @@ func (s *DbData) SaveGauge(key string, val models.Gauge) {
 }
 
 func (s *DbData) SaveCounter(key string, val models.Counter) {
-	log.Info().Msg("SaveCounter")
 	_, err := s.getByName(key)
 	if err != nil {
-		log.Info().AnErr("SaveGauge db error", err).Msg("SaveGauge db error")
+		log.Debug().AnErr("SaveGauge db error", err).Msg("SaveGauge db error")
 		s.save(key, "counter", val, models.Gauge(0))
 	} else {
 		s.update(key, "counter", val, models.Gauge(0))
@@ -130,7 +128,7 @@ func (s *DbData) GetGauge(key string) (models.Gauge, error) {
 func (s *DbData) getByName(name string) (structure.Metrics, error) {
 	result := structure.Metrics{}
 	query := fmt.Sprintf(`SELECT * FROM ypt where id='%s'`, name)
-	log.Info().Msg("getByName query: " + query)
+	log.Debug().Msg("getByName query: " + query)
 	rows, err := s.Db().Query(query)
 	if err != nil {
 		return result, err
@@ -158,7 +156,7 @@ func (s *DbData) getByName(name string) (structure.Metrics, error) {
 func (s *DbData) getByType(mtype string) ([]structure.Metrics, error) {
 	var result []structure.Metrics
 	query := fmt.Sprintf(`SELECT * FROM ypt where mtype ='%s'`, mtype)
-	log.Info().Msg("getByType query: " + query)
+	log.Debug().Msg("getByType query: " + query)
 	rows, err := s.Db().Query(query)
 	if err != nil {
 		return result, err
@@ -186,7 +184,7 @@ func (s *DbData) getByType(mtype string) ([]structure.Metrics, error) {
 func (s *DbData) save(id, mtype string, delta models.Counter, value models.Gauge) {
 	queryTmp := `insert into "ypt" ("id", "mtype", "delta", "value") values('%s', '%s', %v, %v)`
 	query := fmt.Sprintf(queryTmp, id, mtype, delta, value)
-	log.Info().Msg("save query: " + query)
+	log.Debug().Msg("save query: " + query)
 	_, err := s.Db().Exec(query)
 	if err != nil {
 		log.Info().Err(err).Msg("save item error")
@@ -195,7 +193,7 @@ func (s *DbData) save(id, mtype string, delta models.Counter, value models.Gauge
 
 func (s *DbData) update(id, mtype string, delta models.Counter, value models.Gauge) {
 	query := `update "ypt" set "id"=$1, "mtype"=$2, "delta"=$3, "value"=$4 where "id"=$5`
-	log.Info().Msg("update query: " + query)
+	log.Debug().Msg("update query: " + query)
 	_, err := s.Db().Exec(query, id, mtype, delta, value, id)
 	if err != nil {
 		log.Info().Err(err).Msg("update item error")

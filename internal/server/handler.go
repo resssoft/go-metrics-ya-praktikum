@@ -45,7 +45,7 @@ func NewMetricsSaver(storage structure.Storage, cryptoKey, dbAddress string) Met
 }
 
 func (ms *MetricsSaver) SaveGauge(rw http.ResponseWriter, req *http.Request) {
-	fmt.Println(req.URL.Path)
+	log.Info().Msgf("SaveGauge path: ", req.URL.Path)
 	name := chi.URLParam(req, "name")
 	value := chi.URLParam(req, "value")
 	valueFloat64, err := strconv.ParseFloat(value, 64)
@@ -58,7 +58,7 @@ func (ms *MetricsSaver) SaveGauge(rw http.ResponseWriter, req *http.Request) {
 }
 
 func (ms *MetricsSaver) SaveCounter(rw http.ResponseWriter, req *http.Request) {
-	fmt.Println(req.URL.Path)
+	log.Info().Msgf("SaveCounter path: ", req.URL.Path)
 	name := chi.URLParam(req, "name")
 	value := chi.URLParam(req, "value")
 	valueInt64, err := strconv.ParseInt(value, 10, 64)
@@ -71,7 +71,7 @@ func (ms *MetricsSaver) SaveCounter(rw http.ResponseWriter, req *http.Request) {
 }
 
 func (ms *MetricsSaver) GetGauge(rw http.ResponseWriter, req *http.Request) {
-	fmt.Println(req.URL.Path)
+	log.Info().Msgf("GetGauge path: ", req.URL.Path)
 	name := chi.URLParam(req, "name")
 	if name == "" {
 		rw.WriteHeader(http.StatusBadRequest)
@@ -112,7 +112,7 @@ func (ms *MetricsSaver) SaveValue(rw http.ResponseWriter, req *http.Request) {
 		http.Error(rw, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	fmt.Println("SaveValue", req.URL.Path, string(respBody))
+	log.Info().Msgf("SaveValue path: %s, body %s", req.URL.Path, string(respBody))
 	err = json.Unmarshal(respBody, &metrics)
 	if err != nil {
 		rw.Header().Set("Content-Type", "text/html; charset=utf-8")
@@ -169,7 +169,7 @@ func (ms *MetricsSaver) GetValue(rw http.ResponseWriter, req *http.Request) {
 		http.Error(rw, getErr(err.Error()), http.StatusInternalServerError)
 		return
 	}
-	fmt.Println("GetValue", req.URL.Path, string(respBody))
+	log.Info().Msgf("GetValue path: %s, body %s", req.URL.Path, string(respBody))
 	err = json.Unmarshal(respBody, &metrics)
 	if err != nil {
 		rw.WriteHeader(http.StatusBadRequest)

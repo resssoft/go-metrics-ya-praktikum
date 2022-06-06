@@ -3,9 +3,9 @@ package writer
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"github.com/resssoft/go-metrics-ya-praktikum/internal/models"
 	"github.com/resssoft/go-metrics-ya-praktikum/internal/structure"
+	"github.com/rs/zerolog/log"
 	"io/ioutil"
 	"os"
 	"time"
@@ -51,32 +51,32 @@ func (w *writer) Stop(cancel context.CancelFunc) {
 }
 
 func (w *writer) store() {
-	fmt.Println("run store data")
+	log.Debug().Msg("run store data")
 	data := storeData{
 		Counters: w.storage.GetCounters(),
 		Gauges:   w.storage.GetGauges(),
 	}
 	jsonData, err := json.Marshal(data)
 	if err != nil {
-		fmt.Println("json marshal data error: " + err.Error())
+		log.Info().AnErr("unmarshal data error", err).Send()
 	} else {
 		err = ioutil.WriteFile(w.path, jsonData, os.ModePerm)
 		if err != nil {
-			fmt.Println("store data error: " + err.Error())
+			log.Info().AnErr("restore data error", err).Send()
 		}
 	}
 }
 
 func (w *writer) restore() {
-	fmt.Println("run restore data")
+	log.Debug().Msg("run restore data")
 	dataJSON, err := ioutil.ReadFile(w.path)
 	if err != nil {
-		fmt.Println("restore data error: " + err.Error())
+		log.Info().AnErr("restore data error", err).Send()
 	} else {
 		data := storeData{}
 		err = json.Unmarshal(dataJSON, &data)
 		if err != nil {
-			fmt.Println("unmarshal data error: " + err.Error())
+			log.Info().AnErr("unmarshal data error", err).Send()
 		} else {
 			for key, val := range data.Counters {
 				w.storage.SaveCounter(key, val)
@@ -89,13 +89,13 @@ func (w *writer) restore() {
 }
 
 func (w *writer) poll(ctx context.Context) {
-	fmt.Println("run store poll event spy")
+	log.Debug().Msg("run store poll event spy")
 	for {
 		select {
 		case <-w.ticker.C:
 			w.store()
 		case <-ctx.Done():
-			fmt.Println("run store before exit")
+			log.Debug().Msg("run store before exit")
 			w.store()
 			return
 		}

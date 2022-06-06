@@ -2,10 +2,10 @@ package server
 
 import (
 	"compress/gzip"
-	"fmt"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/resssoft/go-metrics-ya-praktikum/internal/structure"
+	"github.com/rs/zerolog/log"
 	"io"
 	"net/http"
 	"strings"
@@ -55,7 +55,7 @@ func (w gzipWriter) Write(b []byte) (int, error) {
 
 func gzipHandle(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Println("middleware", r.URL.Path)
+		log.Debug().Msgf("middleware url: %s", r.URL.Path)
 		if !strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") {
 			next.ServeHTTP(w, r)
 			return
