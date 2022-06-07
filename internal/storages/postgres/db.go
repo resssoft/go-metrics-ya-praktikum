@@ -9,28 +9,28 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-type DbData struct {
+type PgManager struct {
 	storage *sql.DB
 }
 
 func New(address string) (structure.Storage, error) {
 	//host=%s port=%d user=%s password=%s dbname=%s sslmode=disable
-	db, err := sql.Open("postgres", address)
+	pgManang, err := sql.Open("postgres", address)
 	CheckError(err)
-	err = db.Ping()
+	err = pgManang.Ping()
 	CheckError(err)
-	log.Info().Msg("db Connected!")
-	dbData := &DbData{
-		storage: db,
+	log.Info().Msg("postgres Connected!")
+	data := &PgManager{
+		storage: pgManang,
 	}
-	dbData.Init()
-	return dbData, err
+	data.Init()
+	return data, err
 }
 
-func (s *DbData) Close() {
+func (s *PgManager) Close() {
 	err := s.storage.Close()
 	if err != nil {
-		log.Info().Err(err).Msg("Close db error")
+		log.Info().Err(err).Msg("Close pg error")
 	}
 }
 
@@ -40,96 +40,96 @@ func CheckError(err error) {
 	}
 }
 
-func (s *DbData) Db() *sql.DB {
+func (s *PgManager) DB() *sql.DB {
 	return s.storage
 }
 
-func (s *DbData) Init() {
+func (s *PgManager) Init() {
 	query := "create table IF NOT EXISTS ypt (id VARCHAR not null,mtype VARCHAR not null,delta bigint,value double precision);create unique index IF NOT EXISTS ypt_id_uindex on ypt (id);DO $$ BEGIN IF NOT EXISTS (SELECT FROM ypt limit 1) THEN alter table ypt add constraint ypt_pk primary key (id); END IF; END $$;"
-	_, err := s.Db().Query(query)
+	_, err := s.DB().Query(query)
 	if err != nil {
-		log.Info().Err(err).Msg("Init db error")
+		log.Info().Err(err).Msg("Init pg error")
 		return
 	}
-	log.Info().Msg("db init done")
+	log.Info().Msg("pg init done")
 }
 
-func (s *DbData) Ping() string {
-	err := s.Db().Ping()
+func (s *PgManager) Ping() string {
+	err := s.DB().Ping()
 	if err != nil {
 		return err.Error()
 	}
 	return ""
 }
 
-func (s *DbData) SaveGauge(key string, val models.Gauge) {
+func (s *PgManager) SaveGauge(key string, val models.Gauge) {
 	metric, err := s.getByName(key)
 	if err != nil || metric.ID == "" {
-		log.Debug().AnErr("SaveGauge db error", err).Msg("SaveGauge db error")
+		log.Debug().AnErr("SaveGauge pg error", err).Msg("SaveGauge pg error")
 		s.save(key, "gauge", models.Counter(0), val)
 	} else {
 		s.update(key, "gauge", models.Counter(0), val)
 	}
 }
 
-func (s *DbData) SaveCounter(key string, val models.Counter) {
+func (s *PgManager) SaveCounter(key string, val models.Counter) {
 	_, err := s.getByName(key)
 	if err != nil {
-		log.Debug().AnErr("SaveGauge db error", err).Msg("SaveGauge db error")
+		log.Debug().AnErr("SaveGauge pg error", err).Msg("SaveGauge pg error")
 		s.save(key, "counter", val, models.Gauge(0))
 	} else {
 		s.update(key, "counter", val, models.Gauge(0))
 	}
 }
 
-func (s *DbData) GetGauges() map[string]models.Gauge {
+func (s *PgManager) GetGauges() map[string]models.Gauge {
 	result := make(map[string]models.Gauge)
 	items, _ := s.getByType("gauge")
 	for _, item := range items {
-		result[item.ID] = models.Gauge(getDbSafelyValue(item.Value))
+		result[item.ID] = models.Gauge(getDBSafelyValue(item.Value))
 	}
 	return result
 }
 
-func (s *DbData) GetCounters() map[string]models.Counter {
+func (s *PgManager) GetCounters() map[string]models.Counter {
 	result := make(map[string]models.Counter)
 	items, _ := s.getByType("counter")
 	for _, item := range items {
-		result[item.ID] = models.Counter(getDbSafelyDelta(item.Delta))
+		result[item.ID] = models.Counter(getDBSafelyDelta(item.Delta))
 	}
 	return result
 }
 
-func (s *DbData) IncrementCounter(key string, val models.Counter) {
+func (s *PgManager) IncrementCounter(key string, val models.Counter) {
 	metric, err := s.getByName(key)
 	if err == nil {
-		s.update(key, "counter", val+models.Counter(getDbSafelyDelta(metric.Delta)), models.Gauge(0))
+		s.update(key, "counter", val+models.Counter(getDBSafelyDelta(metric.Delta)), models.Gauge(0))
 	}
 }
 
-func (s *DbData) GetCounter(key string) (models.Counter, error) {
+func (s *PgManager) GetCounter(key string) (models.Counter, error) {
 	metric, err := s.getByName(key)
 	var value models.Counter
 	if err == nil {
-		value = models.Counter(getDbSafelyDelta(metric.Delta))
+		value = models.Counter(getDBSafelyDelta(metric.Delta))
 	}
 	return value, err
 }
 
-func (s *DbData) GetGauge(key string) (models.Gauge, error) {
+func (s *PgManager) GetGauge(key string) (models.Gauge, error) {
 	metric, err := s.getByName(key)
 	var value models.Gauge
 	if err == nil {
-		value = models.Gauge(getDbSafelyValue(metric.Value))
+		value = models.Gauge(getDBSafelyValue(metric.Value))
 	}
 	return value, err
 }
 
-func (s *DbData) getByName(name string) (structure.Metrics, error) {
+func (s *PgManager) getByName(name string) (structure.Metrics, error) {
 	result := structure.Metrics{}
 	query := fmt.Sprintf(`SELECT * FROM ypt where id='%s'`, name)
 	log.Debug().Msg("getByName query: " + query)
-	rows, err := s.Db().Query(query)
+	rows, err := s.DB().Query(query)
 	if err != nil {
 		return result, err
 	}
@@ -153,11 +153,11 @@ func (s *DbData) getByName(name string) (structure.Metrics, error) {
 	return result, err
 }
 
-func (s *DbData) getByType(mtype string) ([]structure.Metrics, error) {
+func (s *PgManager) getByType(mtype string) ([]structure.Metrics, error) {
 	var result []structure.Metrics
 	query := fmt.Sprintf(`SELECT * FROM ypt where mtype ='%s'`, mtype)
 	log.Debug().Msg("getByType query: " + query)
-	rows, err := s.Db().Query(query)
+	rows, err := s.DB().Query(query)
 	if err != nil {
 		return result, err
 	}
@@ -181,33 +181,33 @@ func (s *DbData) getByType(mtype string) ([]structure.Metrics, error) {
 	return result, err
 }
 
-func (s *DbData) save(id, mtype string, delta models.Counter, value models.Gauge) {
+func (s *PgManager) save(id, mtype string, delta models.Counter, value models.Gauge) {
 	queryTmp := `insert into "ypt" ("id", "mtype", "delta", "value") values('%s', '%s', %v, %v)`
 	query := fmt.Sprintf(queryTmp, id, mtype, delta, value)
 	log.Debug().Msg("save query: " + query)
-	_, err := s.Db().Exec(query)
+	_, err := s.DB().Exec(query)
 	if err != nil {
 		log.Info().Err(err).Msg("save item error")
 	}
 }
 
-func (s *DbData) update(id, mtype string, delta models.Counter, value models.Gauge) {
+func (s *PgManager) update(id, mtype string, delta models.Counter, value models.Gauge) {
 	query := `update "ypt" set "id"=$1, "mtype"=$2, "delta"=$3, "value"=$4 where "id"=$5`
 	log.Debug().Msg("update query: " + query)
-	_, err := s.Db().Exec(query, id, mtype, delta, value, id)
+	_, err := s.DB().Exec(query, id, mtype, delta, value, id)
 	if err != nil {
 		log.Info().Err(err).Msg("update item error")
 	}
 }
 
-func getDbSafelyDelta(link *int64) int64 {
+func getDBSafelyDelta(link *int64) int64 {
 	if link == nil {
 		return 0
 	}
 	return *link
 }
 
-func getDbSafelyValue(link *float64) float64 {
+func getDBSafelyValue(link *float64) float64 {
 	if link == nil {
 		return 0.0
 	}
