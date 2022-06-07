@@ -45,7 +45,7 @@ func NewMetricsSaver(storage structure.Storage, cryptoKey, dbAddress string) Met
 }
 
 func (ms *MetricsSaver) SaveGauge(rw http.ResponseWriter, req *http.Request) {
-	log.Info().Msgf("SaveGauge path: ", req.URL.Path)
+	log.Info().Msgf("SaveGauge path: %s", req.URL.Path)
 	name := chi.URLParam(req, "name")
 	value := chi.URLParam(req, "value")
 	valueFloat64, err := strconv.ParseFloat(value, 64)
@@ -58,7 +58,7 @@ func (ms *MetricsSaver) SaveGauge(rw http.ResponseWriter, req *http.Request) {
 }
 
 func (ms *MetricsSaver) SaveCounter(rw http.ResponseWriter, req *http.Request) {
-	log.Info().Msgf("SaveCounter path: ", req.URL.Path)
+	log.Info().Msgf("SaveCounter path: %s", req.URL.Path)
 	name := chi.URLParam(req, "name")
 	value := chi.URLParam(req, "value")
 	valueInt64, err := strconv.ParseInt(value, 10, 64)
@@ -71,7 +71,7 @@ func (ms *MetricsSaver) SaveCounter(rw http.ResponseWriter, req *http.Request) {
 }
 
 func (ms *MetricsSaver) GetGauge(rw http.ResponseWriter, req *http.Request) {
-	log.Info().Msgf("GetGauge path: ", req.URL.Path)
+	log.Info().Msgf("GetGauge path: %s", req.URL.Path)
 	name := chi.URLParam(req, "name")
 	if name == "" {
 		rw.WriteHeader(http.StatusBadRequest)
@@ -299,7 +299,7 @@ func (ms *MetricsSaver) GetAll(rw http.ResponseWriter, req *http.Request) {
 	fmt.Fprintf(rw, "%v", tpl.String())
 }
 
-func (ms *MetricsSaver) DbPing(rw http.ResponseWriter, req *http.Request) {
+func (ms *MetricsSaver) DBPing(rw http.ResponseWriter, req *http.Request) {
 	result := ms.storage.Ping()
 	if result == "" {
 		rw.WriteHeader(http.StatusOK)

@@ -43,7 +43,7 @@ func Router(storage structure.Storage, cryptoKey, dbAddress string) chi.Router {
 		})
 	})
 	router.Route("/ping", func(r chi.Router) {
-		r.Get("/", handler.DbPing)
+		r.Get("/", handler.DBPing)
 	})
 
 	return router
