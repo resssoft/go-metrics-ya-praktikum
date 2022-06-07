@@ -46,10 +46,14 @@ func (s *PgManager) DB() *sql.DB {
 
 func (s *PgManager) Init() {
 	query := "create table IF NOT EXISTS ypt (id VARCHAR not null,mtype VARCHAR not null,delta bigint,value double precision);create unique index IF NOT EXISTS ypt_id_uindex on ypt (id);DO $$ BEGIN IF NOT EXISTS (SELECT FROM ypt limit 1) THEN alter table ypt add constraint ypt_pk primary key (id); END IF; END $$;"
-	_, err := s.DB().Query(query)
+	rows, err := s.DB().Query(query)
 	if err != nil {
 		log.Info().Err(err).Msg("Init pg error")
 		return
+	}
+	rowsErr := rows.Err()
+	if rowsErr != nil {
+		log.Info().Err(err).Msg("rowsErr")
 	}
 	log.Info().Msg("pg init done")
 }
@@ -133,6 +137,10 @@ func (s *PgManager) getByName(name string) (structure.Metrics, error) {
 	if err != nil {
 		return result, err
 	}
+	rowsErr := rows.Err()
+	if rowsErr != nil {
+		return result, err
+	}
 	defer rows.Close()
 	if rows.Next() {
 		var id string
@@ -159,6 +167,10 @@ func (s *PgManager) getByType(mtype string) ([]structure.Metrics, error) {
 	log.Debug().Msg("getByType query: " + query)
 	rows, err := s.DB().Query(query)
 	if err != nil {
+		return result, err
+	}
+	rowsErr := rows.Err()
+	if rowsErr != nil {
 		return result, err
 	}
 	defer rows.Close()

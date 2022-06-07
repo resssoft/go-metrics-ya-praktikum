@@ -19,7 +19,7 @@ import (
 )
 
 func main() {
-	zerolog.SetGlobalLevel(zerolog.InfoLevel) // DebugLevel | InfoLevel
+	zerolog.SetGlobalLevel(zerolog.DebugLevel) // DebugLevel | InfoLevel
 	restoreFlag := flag.Bool("r", true, "restore flag")
 	addressFlag := flag.String("a", ":8080", "server address")
 	storePathFlag := flag.String("f", "/tmp/devops-metrics-db.json", "server store file path")
@@ -36,12 +36,13 @@ func main() {
 	dbAddress := params.StrByEnv(*dbAddressFlag, "DATABASE_DSN")
 	var writerServiceCenselFunc context.CancelFunc
 	log.Info().Msgf(
-		"Start server by address: %s store duration: %v restore flag: %v and store file: %s key [%s]\n",
+		"Start server by address: %s store duration: %v restore flag: %v and store file: %s key [%s] db: %s\n",
 		address,
 		storeInterval,
 		restore,
 		storePath,
-		cryptoKey)
+		cryptoKey,
+		dbAddress)
 	storage := ramstorage.New()
 	writerService := writer.New(storeInterval, storePath, restore, storage)
 	if dbAddress != "" {
