@@ -44,7 +44,8 @@ func New(
 func (r *Reporter) Start() context.CancelFunc {
 	ctx, cancel := context.WithCancel(context.Background())
 	r.ticker = time.NewTicker(r.Duration)
-	go r.report(ctx)
+	go r.reportHandler(ctx)
+	r.report()
 	return cancel
 }
 
@@ -52,40 +53,45 @@ func (r *Reporter) Stop(cancel context.CancelFunc) {
 	cancel()
 }
 
-func (r *Reporter) report(ctx context.Context) {
-	log.Debug().Msg("run report event spy")
+func (r *Reporter) reportHandler(ctx context.Context) {
+	log.Info().Msg("run report event spy")
 	for {
 		select {
 		case <-r.ticker.C:
-			for name, value := range r.storage.GetGauges() {
-				gaugeValue := float64(value)
-				metric := structure.Metrics{
-					ID:    name,
-					MType: "gauge",
-					Value: &gaugeValue,
-				}
-				err := r.send(metric)
-				if err != nil {
-					log.Info().AnErr("send gauge metric error", err).Send()
-					return
-				}
-			}
-
-			for name, value := range r.storage.GetCounters() {
-				deltaValue := int64(value)
-				metric := structure.Metrics{
-					ID:    name,
-					MType: "counter",
-					Delta: &deltaValue,
-				}
-				err := r.send(metric)
-				if err != nil {
-					log.Info().AnErr("send counter metric error", err).Send()
-					return
-				}
-			}
+			r.report()
 		case <-ctx.Done():
 			log.Info().Msg("break report")
+			return
+		}
+	}
+}
+
+func (r *Reporter) report() {
+	log.Info().Msg("send metrics")
+	for name, value := range r.storage.GetGauges() {
+		gaugeValue := float64(value)
+		metric := structure.Metrics{
+			ID:    name,
+			MType: "gauge",
+			Value: &gaugeValue,
+		}
+		err := r.send(metric)
+		if err != nil {
+			log.Info().AnErr("send gauge metric error", err).Send()
+			return
+		}
+	}
+
+	for name, value := range r.storage.GetCounters() {
+		deltaValue := int64(value)
+		metric := structure.Metrics{
+			ID:    name,
+			MType: "counter",
+			Delta: &deltaValue,
+		}
+		err := r.send(metric)
+		if err != nil {
+			log.Info().AnErr("send counter metric error", err).Send()
 			return
 		}
 	}
