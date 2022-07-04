@@ -247,6 +247,66 @@ func (ms *MetricsSaver) getMetricsHash(metrics structure.Metrics) []byte {
 	return h.Sum(nil)
 }
 
+func (ms *MetricsSaver) SaveValues(rw http.ResponseWriter, req *http.Request) {
+	var metricsList []structure.Metrics
+	respBody, err := ioutil.ReadAll(req.Body)
+	if err != nil {
+		rw.Header().Set("Content-Type", "text/html; charset=utf-8")
+		rw.WriteHeader(http.StatusInternalServerError)
+		http.Error(rw, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	log.Info().Msgf("SaveValue path: %s, body %s", req.URL.Path, string(respBody))
+	err = json.Unmarshal(respBody, &metricsList)
+	if err != nil {
+		rw.Header().Set("Content-Type", "text/html; charset=utf-8")
+		rw.WriteHeader(http.StatusBadRequest)
+		http.Error(rw, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	log.Info().Interface("metrics", metricsList).Send()
+	for _, metrics := range metricsList {
+		if metrics.Hash != "" && ms.cryptoKey != "" {
+			sha := ms.getMetricsHash(metrics)
+			decodedHex, err := hex.DecodeString(metrics.Hash)
+			if err != nil {
+				rw.Header().Set("Content-Type", "text/html; charset=utf-8")
+				http.Error(rw, "Hash can`t be decoded", http.StatusBadRequest)
+				return
+			}
+			if !hmac.Equal(sha, decodedHex) {
+				rw.Header().Set("Content-Type", "text/html; charset=utf-8")
+				http.Error(rw, "Hash sum is not true", http.StatusBadRequest)
+				return
+			}
+		}
+		switch metrics.MType {
+		case "counter":
+			if metrics.Delta == nil {
+				rw.Header().Set("Content-Type", "text/html; charset=utf-8")
+				rw.WriteHeader(http.StatusBadRequest)
+				http.Error(rw, "Delta is empty", http.StatusInternalServerError)
+				return
+			}
+			ms.storage.IncrementCounter(metrics.ID, models.Counter(*metrics.Delta))
+			rw.WriteHeader(http.StatusOK)
+		case "gauge":
+			if metrics.Value == nil {
+				rw.Header().Set("Content-Type", "text/html; charset=utf-8")
+				rw.WriteHeader(http.StatusBadRequest)
+				http.Error(rw, "Value is empty", http.StatusInternalServerError)
+				return
+			}
+			ms.storage.SaveGauge(metrics.ID, models.Gauge(*metrics.Value))
+			rw.WriteHeader(http.StatusOK)
+		default:
+			rw.Header().Set("Content-Type", "text/html; charset=utf-8")
+			rw.WriteHeader(http.StatusForbidden)
+			return
+		}
+	}
+}
+
 func getSafelyDelta(link *int64) int64 {
 	if link == nil {
 		return 0

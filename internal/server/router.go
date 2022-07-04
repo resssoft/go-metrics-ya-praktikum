@@ -33,6 +33,9 @@ func Router(storage structure.Storage, cryptoKey, dbAddress string) chi.Router {
 			r.Post("/counter/", handler.h404)
 			r.Post("/*", handler.h501) // it is wrong, i think, but autotests think otherwise
 		})
+		r.Route("/updates", func(r chi.Router) {
+			r.Post("/", handler.SaveValues)
+		})
 		r.Route("/value", func(r chi.Router) {
 			r.Get("/gauge/{name}", handler.GetGauge)
 			r.Get("/counter/{name}", handler.GetCounter)
