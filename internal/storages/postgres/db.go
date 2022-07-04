@@ -105,9 +105,12 @@ func (s *PgManager) GetCounters() map[string]models.Counter {
 }
 
 func (s *PgManager) IncrementCounter(key string, val models.Counter) {
-	metric, err := s.getByName(key)
+	_, err := s.getByName(key)
 	if err == nil {
-		s.update(key, "counter", val+models.Counter(getDBSafelyDelta(metric.Delta)), models.Gauge(0))
+		val++
+		s.update(key, "counter", val, models.Gauge(0)) //+models.Counter(getDBSafelyDelta(metric.Delta))
+	} else {
+		s.update(key, "counter", val, models.Gauge(0))
 	}
 }
 
@@ -139,7 +142,7 @@ func (s *PgManager) getByName(name string) (structure.Metrics, error) {
 	}
 	rowsErr := rows.Err()
 	if rowsErr != nil {
-		return result, err
+		return result, rowsErr
 	}
 	defer rows.Close()
 	if rows.Next() {
@@ -171,7 +174,7 @@ func (s *PgManager) getByType(mtype string) ([]structure.Metrics, error) {
 	}
 	rowsErr := rows.Err()
 	if rowsErr != nil {
-		return result, err
+		return result, rowsErr
 	}
 	defer rows.Close()
 	for rows.Next() {

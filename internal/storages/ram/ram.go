@@ -60,8 +60,9 @@ func (s *simpleRAMStorage) GetCounters() map[string]models.Counter {
 
 func (s *simpleRAMStorage) IncrementCounter(key string, val models.Counter) {
 	s.storage.Lock()
-	if current, ok := s.storage.CounterData[key]; ok {
-		s.storage.CounterData[key] = val + current
+	if _, ok := s.storage.CounterData[key]; ok {
+		val++
+		s.storage.CounterData[key] = val // + current
 	} else {
 		s.storage.CounterData[key] = val
 	}

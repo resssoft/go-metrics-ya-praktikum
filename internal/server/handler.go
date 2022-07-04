@@ -207,7 +207,7 @@ func (ms *MetricsSaver) GetValue(rw http.ResponseWriter, req *http.Request) {
 		floatVal := float64(val)
 		metrics.Value = &floatVal
 		if err != nil {
-			rw.WriteHeader(http.StatusForbidden)
+			rw.WriteHeader(http.StatusNotFound)
 			rw.Header().Set("X-Content-Type-Options", "nosniff")
 			fmt.Fprintln(rw, getErr(err.Error()))
 			//http.Error(rw, getErr(err.Error()), http.StatusForbidden)
