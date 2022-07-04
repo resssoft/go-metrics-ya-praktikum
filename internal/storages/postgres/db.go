@@ -105,10 +105,9 @@ func (s *PgManager) GetCounters() map[string]models.Counter {
 }
 
 func (s *PgManager) IncrementCounter(key string, val models.Counter) {
-	_, err := s.getByName(key)
+	metric, err := s.getByName(key)
 	if err == nil {
-		val++
-		s.update(key, "counter", val, models.Gauge(0)) //+models.Counter(getDBSafelyDelta(metric.Delta))
+		s.update(key, "counter", val+models.Counter(getDBSafelyDelta(metric.Delta)), models.Gauge(0))
 	} else {
 		s.update(key, "counter", val, models.Gauge(0))
 	}
