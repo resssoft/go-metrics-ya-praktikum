@@ -109,7 +109,7 @@ func (s *PgManager) IncrementCounter(key string, val models.Counter) {
 	if err == nil {
 		s.update(key, "counter", val+models.Counter(getDBSafelyDelta(metric.Delta)), models.Gauge(0))
 	} else {
-		s.update(key, "counter", val, models.Gauge(0))
+		s.save(key, "counter", val, models.Gauge(0))
 	}
 }
 
@@ -159,6 +159,8 @@ func (s *PgManager) getByName(name string) (structure.Metrics, error) {
 			Delta: delta,
 			Value: value,
 		}
+	} else {
+		return result, models.ErrorNotFound
 	}
 	return result, err
 }

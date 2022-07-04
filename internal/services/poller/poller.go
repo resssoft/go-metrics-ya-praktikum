@@ -15,7 +15,6 @@ type Poller struct {
 	ticker   *time.Ticker
 	iterator int
 	storage  structure.Storage
-	info     runtime.MemStats
 	randoms  *rand.Rand
 }
 
@@ -47,9 +46,8 @@ func (p *Poller) pollHandler(ctx context.Context) {
 	for {
 		select {
 		case <-p.ticker.C:
-
+			p.poll()
 			log.Debug().Msg("poll iterator")
-
 		case <-ctx.Done():
 			log.Info().Msg("break poll")
 			return
@@ -58,7 +56,7 @@ func (p *Poller) pollHandler(ctx context.Context) {
 }
 
 func (p *Poller) poll() {
-	m := p.info
+	var m runtime.MemStats
 	runtime.ReadMemStats(&m)
 	p.storage.SaveGauge("Alloc", models.Gauge(m.Alloc))
 	p.storage.SaveGauge("Alloc", models.Gauge(m.Alloc))
