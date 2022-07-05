@@ -72,7 +72,7 @@ func (r *Reporter) report() {
 		gaugeValue := float64(value)
 		metric := structure.Metrics{
 			ID:    name,
-			MType: "gauge",
+			MType: structure.GaugeType,
 			Value: &gaugeValue,
 		}
 		err := r.send(metric)
@@ -86,7 +86,7 @@ func (r *Reporter) report() {
 		deltaValue := int64(value)
 		metric := structure.Metrics{
 			ID:    name,
-			MType: "counter",
+			MType: structure.CounterType,
 			Delta: &deltaValue,
 		}
 		err := r.send(metric)
@@ -101,9 +101,9 @@ func (r *Reporter) send(metric structure.Metrics) error {
 	if r.cryptoKey != "" {
 		var hashBody []byte
 		switch metric.MType {
-		case "counter":
+		case structure.CounterType:
 			hashBody = []byte(fmt.Sprintf("%s:counter:%d", metric.ID, getxSafelyDelta(metric.Delta)))
-		case "gauge":
+		case structure.GaugeType:
 			hashBody = []byte(fmt.Sprintf("%s:gauge:%f", metric.ID, getxSafelyValue(metric.Value)))
 		}
 		h := hmac.New(sha256.New, []byte(r.cryptoKey))

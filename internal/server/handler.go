@@ -136,7 +136,7 @@ func (ms *MetricsSaver) SaveValue(rw http.ResponseWriter, req *http.Request) {
 		}
 	}
 	switch metrics.MType {
-	case "counter":
+	case structure.CounterType:
 		if metrics.Delta == nil {
 			rw.Header().Set("Content-Type", "text/html; charset=utf-8")
 			rw.WriteHeader(http.StatusBadRequest)
@@ -145,7 +145,7 @@ func (ms *MetricsSaver) SaveValue(rw http.ResponseWriter, req *http.Request) {
 		}
 		ms.storage.IncrementCounter(metrics.ID, models.Counter(*metrics.Delta))
 		rw.WriteHeader(http.StatusOK)
-	case "gauge":
+	case structure.GaugeType:
 		if metrics.Value == nil {
 			rw.Header().Set("Content-Type", "text/html; charset=utf-8")
 			rw.WriteHeader(http.StatusBadRequest)
@@ -179,7 +179,7 @@ func (ms *MetricsSaver) GetValue(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 	switch metrics.MType {
-	case "counter":
+	case structure.CounterType:
 		val, err := ms.storage.GetCounter(metrics.ID)
 		if err != nil {
 			rw.WriteHeader(http.StatusNotFound)
@@ -202,7 +202,7 @@ func (ms *MetricsSaver) GetValue(rw http.ResponseWriter, req *http.Request) {
 			return
 		}
 		fmt.Fprintf(rw, "%s", string(metricJSON))
-	case "gauge":
+	case structure.GaugeType:
 		val, err := ms.storage.GetGauge(metrics.ID)
 		floatVal := float64(val)
 		metrics.Value = &floatVal
@@ -237,9 +237,9 @@ func (ms *MetricsSaver) GetValue(rw http.ResponseWriter, req *http.Request) {
 func (ms *MetricsSaver) getMetricsHash(metrics structure.Metrics) []byte {
 	var hashBody []byte
 	switch metrics.MType {
-	case "counter":
+	case structure.CounterType:
 		hashBody = []byte(fmt.Sprintf("%s:counter:%d", metrics.ID, getSafelyDelta(metrics.Delta)))
-	case "gauge":
+	case structure.GaugeType:
 		hashBody = []byte(fmt.Sprintf("%s:gauge:%f", metrics.ID, getSafelyValue(metrics.Value)))
 	}
 	h := hmac.New(sha256.New, []byte(ms.cryptoKey))
@@ -281,7 +281,7 @@ func (ms *MetricsSaver) SaveValues(rw http.ResponseWriter, req *http.Request) {
 			}
 		}
 		switch metrics.MType {
-		case "counter":
+		case structure.CounterType:
 			if metrics.Delta == nil {
 				rw.Header().Set("Content-Type", "text/html; charset=utf-8")
 				rw.WriteHeader(http.StatusBadRequest)
@@ -290,7 +290,7 @@ func (ms *MetricsSaver) SaveValues(rw http.ResponseWriter, req *http.Request) {
 			}
 			ms.storage.IncrementCounter(metrics.ID, models.Counter(*metrics.Delta))
 			rw.WriteHeader(http.StatusOK)
-		case "gauge":
+		case structure.GaugeType:
 			if metrics.Value == nil {
 				rw.Header().Set("Content-Type", "text/html; charset=utf-8")
 				rw.WriteHeader(http.StatusBadRequest)
@@ -380,6 +380,9 @@ func getErr(msg string) string {
 	errObj := errResponse{
 		Error: msg,
 	}
-	errObjJSON, _ := json.Marshal(errObj)
+	errObjJSON, err := json.Marshal(errObj)
+	if err != nil {
+		return fmt.Sprintf("{Error:\"%s\"}", err.Error())
+	}
 	return string(errObjJSON)
 }

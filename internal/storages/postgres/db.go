@@ -13,7 +13,7 @@ type PgManager struct {
 	storage *sql.DB
 }
 
-func New(address string) (structure.Storage, error) {
+func New(address string) (*PgManager, error) {
 	//host=%s port=%d user=%s password=%s dbname=%s sslmode=disable
 	pgManang, err := sql.Open("postgres", address)
 	CheckError(err)
@@ -28,8 +28,7 @@ func New(address string) (structure.Storage, error) {
 }
 
 func (s *PgManager) Close() {
-	err := s.storage.Close()
-	if err != nil {
+	if err := s.storage.Close(); err != nil {
 		log.Info().Err(err).Msg("Close pg error")
 	}
 }
@@ -45,15 +44,30 @@ func (s *PgManager) DB() *sql.DB {
 }
 
 func (s *PgManager) Init() {
-	query := "create table IF NOT EXISTS ypt (id VARCHAR not null,mtype VARCHAR not null,delta bigint,value double precision);create unique index IF NOT EXISTS ypt_id_uindex on ypt (id);DO $$ BEGIN IF NOT EXISTS (SELECT FROM ypt limit 1) THEN alter table ypt add constraint ypt_pk primary key (id); END IF; END $$;"
+	var query = `create table IF NOT EXISTS ypt
+(
+    id    VARCHAR not null,
+    mtype VARCHAR not null,
+    delta bigint,
+    value double precision
+);
+create unique index IF NOT EXISTS ypt_id_uindex on ypt (id);
+DO
+$$
+    BEGIN
+        IF NOT EXISTS(SELECT FROM ypt limit 1) THEN alter table ypt
+            add constraint ypt_pk primary key (id);
+        END IF;
+    END
+$$;` //TODO: use migrates
 	rows, err := s.DB().Query(query)
 	if err != nil {
 		log.Info().Err(err).Msg("Init pg error")
 		return
 	}
-	rowsErr := rows.Err()
-	if rowsErr != nil {
-		log.Info().Err(err).Msg("rowsErr")
+	defer rows.Close()
+	if rowsErr := rows.Err(); rowsErr != nil {
+		log.Info().Err(rowsErr).Msg("rowsErr")
 	}
 	log.Info().Msg("pg init done")
 }
@@ -70,9 +84,9 @@ func (s *PgManager) SaveGauge(key string, val models.Gauge) {
 	metric, err := s.getByName(key)
 	if err != nil || metric.ID == "" {
 		log.Debug().AnErr("SaveGauge pg error", err).Msg("SaveGauge pg error")
-		s.save(key, "gauge", models.Counter(0), val)
+		s.save(key, structure.GaugeType, models.Counter(0), val)
 	} else {
-		s.update(key, "gauge", models.Counter(0), val)
+		s.update(key, structure.GaugeType, models.Counter(0), val)
 	}
 }
 
@@ -80,15 +94,15 @@ func (s *PgManager) SaveCounter(key string, val models.Counter) {
 	_, err := s.getByName(key)
 	if err != nil {
 		log.Debug().AnErr("SaveGauge pg error", err).Msg("SaveGauge pg error")
-		s.save(key, "counter", val, models.Gauge(0))
+		s.save(key, structure.CounterType, val, models.Gauge(0))
 	} else {
-		s.update(key, "counter", val, models.Gauge(0))
+		s.update(key, structure.CounterType, val, models.Gauge(0))
 	}
 }
 
 func (s *PgManager) GetGauges() map[string]models.Gauge {
 	result := make(map[string]models.Gauge)
-	items, _ := s.getByType("gauge")
+	items, _ := s.getByType(structure.GaugeType)
 	for _, item := range items {
 		result[item.ID] = models.Gauge(getDBSafelyValue(item.Value))
 	}
@@ -97,7 +111,7 @@ func (s *PgManager) GetGauges() map[string]models.Gauge {
 
 func (s *PgManager) GetCounters() map[string]models.Counter {
 	result := make(map[string]models.Counter)
-	items, _ := s.getByType("counter")
+	items, _ := s.getByType(structure.CounterType)
 	for _, item := range items {
 		result[item.ID] = models.Counter(getDBSafelyDelta(item.Delta))
 	}
@@ -107,12 +121,11 @@ func (s *PgManager) GetCounters() map[string]models.Counter {
 func (s *PgManager) IncrementCounter(key string, val models.Counter) {
 	metric, err := s.getByName(key)
 	if err == nil {
-		s.update(key, "counter", val+models.Counter(getDBSafelyDelta(metric.Delta)), models.Gauge(0))
+		s.update(key, structure.CounterType, val+models.Counter(getDBSafelyDelta(metric.Delta)), models.Gauge(0))
 	} else {
-		s.save(key, "counter", val, models.Gauge(0))
+		s.save(key, structure.CounterType, val, models.Gauge(0))
 	}
 }
-
 func (s *PgManager) GetCounter(key string) (models.Counter, error) {
 	metric, err := s.getByName(key)
 	var value models.Counter
@@ -139,11 +152,10 @@ func (s *PgManager) getByName(name string) (structure.Metrics, error) {
 	if err != nil {
 		return result, err
 	}
-	rowsErr := rows.Err()
-	if rowsErr != nil {
+	defer rows.Close()
+	if rowsErr := rows.Err(); rowsErr != nil {
 		return result, rowsErr
 	}
-	defer rows.Close()
 	if rows.Next() {
 		var id string
 		var mtype string
@@ -160,7 +172,7 @@ func (s *PgManager) getByName(name string) (structure.Metrics, error) {
 			Value: value,
 		}
 	} else {
-		return result, models.ErrorNotFound
+		return result, models.ErrNotFound
 	}
 	return result, err
 }
@@ -173,11 +185,10 @@ func (s *PgManager) getByType(mtype string) ([]structure.Metrics, error) {
 	if err != nil {
 		return result, err
 	}
-	rowsErr := rows.Err()
-	if rowsErr != nil {
+	defer rows.Close()
+	if rowsErr := rows.Err(); rowsErr != nil {
 		return result, rowsErr
 	}
-	defer rows.Close()
 	for rows.Next() {
 		var id string
 		var mtype string

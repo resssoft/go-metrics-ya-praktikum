@@ -27,7 +27,7 @@ func New(
 	duration time.Duration,
 	path string,
 	restoreFlag bool,
-	storage structure.Storage) structure.Task {
+	storage structure.Storage) *writer {
 	writerClient := &writer{
 		duration: duration,
 		storage:  storage,

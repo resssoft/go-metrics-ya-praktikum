@@ -5,6 +5,11 @@ import (
 	"github.com/resssoft/go-metrics-ya-praktikum/internal/models"
 )
 
+const (
+	CounterType = "counter"
+	GaugeType   = "gauge"
+)
+
 type Task interface {
 	Start() context.CancelFunc
 	Stop(context.CancelFunc)

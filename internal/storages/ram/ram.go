@@ -3,7 +3,6 @@ package ramstorage
 import (
 	"errors"
 	"github.com/resssoft/go-metrics-ya-praktikum/internal/models"
-	"github.com/resssoft/go-metrics-ya-praktikum/internal/structure"
 	"sync"
 )
 
@@ -17,7 +16,7 @@ type simpleRAMStorage struct {
 	storage memStorage
 }
 
-func New() structure.Storage {
+func New() *simpleRAMStorage {
 	return &simpleRAMStorage{
 		storage: memStorage{
 			GaugeData:   make(map[string]models.Gauge),
@@ -69,18 +68,18 @@ func (s *simpleRAMStorage) IncrementCounter(key string, val models.Counter) {
 }
 
 func (s *simpleRAMStorage) GetCounter(key string) (models.Counter, error) {
-	var err error = nil
+	var err error
 	s.storage.Lock()
 	value, ok := s.storage.CounterData[key]
 	if !ok {
-		err = models.ErrorNotFound
+		err = models.ErrNotFound
 	}
 	s.storage.Unlock()
 	return value, err
 }
 
 func (s *simpleRAMStorage) GetGauge(key string) (models.Gauge, error) {
-	var err error = nil
+	var err error
 	s.storage.Lock()
 	value, ok := s.storage.GaugeData[key]
 	if !ok {

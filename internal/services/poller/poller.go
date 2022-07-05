@@ -20,7 +20,7 @@ type Poller struct {
 
 func New(
 	duration time.Duration,
-	storage structure.Storage) structure.Task {
+	storage structure.Storage) *Poller {
 	s1 := rand.NewSource(time.Now().UnixNano())
 	return &Poller{
 		randoms:  rand.New(s1),

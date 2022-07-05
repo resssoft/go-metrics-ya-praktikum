@@ -7,6 +7,7 @@ import (
 	"github.com/resssoft/go-metrics-ya-praktikum/internal/services/writer"
 	"github.com/resssoft/go-metrics-ya-praktikum/internal/storages/postgres"
 	ramstorage "github.com/resssoft/go-metrics-ya-praktikum/internal/storages/ram"
+	"github.com/resssoft/go-metrics-ya-praktikum/internal/structure"
 	"github.com/resssoft/go-metrics-ya-praktikum/pkg/params"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -43,7 +44,8 @@ func main() {
 		storePath,
 		cryptoKey,
 		dbAddress)
-	storage := ramstorage.New()
+	var storage structure.Storage
+	storage = ramstorage.New()
 	writerService := writer.New(storeInterval, storePath, restore, storage)
 	if dbAddress != "" {
 		log.Info().Msg("used sql db")

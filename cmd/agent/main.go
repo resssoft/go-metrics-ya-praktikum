@@ -11,7 +11,6 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
-	"testing"
 	"time"
 )
 
@@ -59,8 +58,4 @@ func main() {
 			log.Info().Msg("Unknown signal.")
 		}
 	}()
-}
-
-func TestMain(t *testing.T) {
-	t.Skip()
 }

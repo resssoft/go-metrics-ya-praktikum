@@ -128,6 +128,7 @@ func TestRouter(t *testing.T) {
 }
 
 func testRequest(t *testing.T, ts *httptest.Server, method, path string) (*http.Response, string) {
+	t.Helper()
 	req, err := http.NewRequest(method, ts.URL+path, nil)
 	t.Log(method, path)
 	require.NoError(t, err)
