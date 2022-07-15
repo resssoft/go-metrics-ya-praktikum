@@ -8,4 +8,6 @@ require (
 	github.com/rs/zerolog v1.26.1
 	github.com/shirou/gopsutil/v3 v3.22.6
 	github.com/stretchr/testify v1.7.5
+	github.com/tklauser/go-sysconf v0.3.10
+	github.com/tklauser/numcpus v0.4.0
 )
