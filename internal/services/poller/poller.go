@@ -5,13 +5,14 @@ import (
 	"github.com/resssoft/go-metrics-ya-praktikum/internal/models"
 	"github.com/resssoft/go-metrics-ya-praktikum/internal/structure"
 	"github.com/rs/zerolog/log"
+	"github.com/shirou/gopsutil/cpu"
+	"github.com/shirou/gopsutil/mem"
 	"math/rand"
 	"runtime"
 	"time"
 )
 
 //"github.com/shirou/gopsutil/cpu"
-//"github.com/shirou/gopsutil/mem"
 
 type Poller struct {
 	Duration time.Duration
@@ -113,21 +114,19 @@ func (p *Poller) poll() {
 }
 
 func (p *Poller) pollExternal() {
-	/*
-		// IT IS NOT WORKED WITH YANDEX PRACTICUM TESTS!!!!!
-		//memoryInfo, memErr := mem.VirtualMemory()
-		if memErr == nil {
-			//p.storage.SaveGauge("TotalMemory", models.Gauge(memoryInfo.Total))
-			//p.storage.SaveGauge("FreeMemory", models.Gauge(memoryInfo.Free))
-		} else {
-			log.Info().Msgf("memory Info error: ", memErr.Error())
-		}
-		cpusInfo, _ := cpu.Percent(time.Second*10, false)
-		if len(cpusInfo) > 0 {
-			p.storage.SaveGauge("CPUutilization1", models.Gauge(cpusInfo[0]))
-		}
-	*/
-	p.storage.SaveGauge("TotalMemory", models.Gauge(p.randoms.Float64()))
-	p.storage.SaveGauge("FreeMemory", models.Gauge(p.randoms.Float64()))
-	p.storage.SaveGauge("CPUutilization1", models.Gauge(p.randoms.Float64()))
+	// IT IS NOT WORKED WITH YANDEX PRACTICUM TESTS!!!!!
+	memoryInfo, memErr := mem.VirtualMemory()
+	if memErr == nil {
+		p.storage.SaveGauge("TotalMemory", models.Gauge(memoryInfo.Total))
+		p.storage.SaveGauge("FreeMemory", models.Gauge(memoryInfo.Free))
+	} else {
+		log.Info().Msgf("memory Info error: ", memErr.Error())
+	}
+	cpusInfo, _ := cpu.Percent(time.Second*10, false)
+	if len(cpusInfo) > 0 {
+		p.storage.SaveGauge("CPUutilization1", models.Gauge(cpusInfo[0]))
+	}
+	//p.storage.SaveGauge("TotalMemory", models.Gauge(p.randoms.Float64()))
+	//p.storage.SaveGauge("FreeMemory", models.Gauge(p.randoms.Float64()))
+	//p.storage.SaveGauge("CPUutilization1", models.Gauge(p.randoms.Float64()))
 }
