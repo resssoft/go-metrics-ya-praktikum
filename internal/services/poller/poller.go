@@ -5,6 +5,8 @@ import (
 	"github.com/resssoft/go-metrics-ya-praktikum/internal/models"
 	"github.com/resssoft/go-metrics-ya-praktikum/internal/structure"
 	"github.com/rs/zerolog/log"
+	"github.com/shirou/gopsutil/v3/cpu"
+	"github.com/shirou/gopsutil/v3/mem"
 	"math/rand"
 	"runtime"
 	"time"
@@ -13,6 +15,7 @@ import (
 type Poller struct {
 	Duration time.Duration
 	ticker   *time.Ticker
+	ticker2  *time.Ticker
 	iterator int
 	storage  structure.Storage
 	randoms  *rand.Rand
@@ -32,7 +35,9 @@ func New(
 func (p *Poller) Start() context.CancelFunc {
 	ctx, cancel := context.WithCancel(context.Background())
 	p.ticker = time.NewTicker(p.Duration)
+	p.ticker2 = time.NewTicker(p.Duration)
 	go p.pollHandler(ctx)
+	go p.pollHandler2(ctx)
 	p.poll()
 	return cancel
 }
@@ -50,6 +55,20 @@ func (p *Poller) pollHandler(ctx context.Context) {
 			log.Debug().Msg("poll iterator")
 		case <-ctx.Done():
 			log.Info().Msg("break poll")
+			return
+		}
+	}
+}
+
+func (p *Poller) pollHandler2(ctx context.Context) {
+	log.Info().Msg("run pollExternal event spy")
+	for {
+		select {
+		case <-p.ticker2.C:
+			p.pollExternal()
+			log.Debug().Msg("pollExternal iterator")
+		case <-ctx.Done():
+			log.Info().Msg("break pollExternal")
 			return
 		}
 	}
@@ -90,4 +109,18 @@ func (p *Poller) poll() {
 
 	p.iterator++
 	p.storage.SaveCounter("PollCount", models.Counter(p.iterator))
+}
+
+func (p *Poller) pollExternal() {
+	memoryInfo, memErr := mem.VirtualMemory()
+	if memErr == nil {
+		p.storage.SaveGauge("TotalMemory", models.Gauge(memoryInfo.Total))
+		p.storage.SaveGauge("FreeMemory", models.Gauge(memoryInfo.Free))
+	} else {
+		log.Info().Msgf("memory Info error: ", memErr.Error())
+	}
+	cpusInfo, _ := cpu.Percent(time.Second*10, false)
+	if len(cpusInfo) > 0 {
+		p.storage.SaveGauge("CPUutilization1", models.Gauge(cpusInfo[0]))
+	}
 }
